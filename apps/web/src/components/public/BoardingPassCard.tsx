@@ -208,6 +208,7 @@ export const BoardingPassCard: React.FC<BoardingPassProps> = ({
   const cabinClass = (ticket.cabinClass || 'ECONOMY').toUpperCase();
   const isBusiness = cabinClass === 'BUSINESS';
   const isFirst = cabinClass === 'FIRST';
+  const isCancelled = bookingStatus === 'CANCELLED' || ticket.status === 'CANCELLED';
 
   const zone = isFirst ? 'ZONE 1' : isBusiness ? 'ZONE 1' : (ticket.seat?.row || 17) <= 15 ? 'ZONE 2' : 'ZONE 3';
   const baggageAllowance = isFirst
@@ -368,8 +369,12 @@ export const BoardingPassCard: React.FC<BoardingPassProps> = ({
                 {cabinClass === 'FIRST' ? t('first') : cabinClass === 'BUSINESS' ? t('business') : t('economy')}
               </div>
 
-              <div className="px-3 py-1 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold uppercase">
-                {ticket.status || 'ISSUED'}
+              <div className={`px-3 py-1 rounded-xl border text-xs font-bold uppercase ${
+                isCancelled
+                  ? 'bg-rose-500/30 border-rose-400 text-rose-200'
+                  : 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300'
+              }`}>
+                {isCancelled ? 'ĐÃ HỦY VÉ / CANCELLED' : (ticket.status || 'ISSUED')}
               </div>
 
               <div className="px-3 py-1 rounded-xl bg-white/15 border border-white/20 text-white font-mono text-xs font-black tracking-wider">
@@ -382,6 +387,18 @@ export const BoardingPassCard: React.FC<BoardingPassProps> = ({
           <div className="flex flex-row items-stretch bg-white relative">
             {/* LEFT PANEL: MAIN BOARDING PASS (72% WIDTH) */}
             <div className="flex-1 p-6 space-y-4 min-w-0">
+              {/* Cancellation Notice Banner */}
+              {isCancelled && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between text-xs text-rose-800 font-bold">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+                    <span>VÉ ĐÃ HOÀN / HỦY — Chỗ ngồi ({ticket.seat?.seatNumber}) đã được trả về trạng thái "Chưa đặt" trên sơ đồ chỗ ngồi của chuyến bay.</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-rose-200 text-rose-900 text-[10px] uppercase font-black flex-shrink-0 ml-2">
+                    RELEASED
+                  </span>
+                </div>
+              )}
               {/* Row 1: Passenger Name, ID, ETKT & Aircraft */}
               <div className="flex items-start justify-between gap-4 pb-3 border-b border-slate-100">
                 <div>
@@ -508,12 +525,20 @@ export const BoardingPassCard: React.FC<BoardingPassProps> = ({
                 </div>
 
                 {/* Seat (Prominent) */}
-                <div className="p-2.5 bg-primary-950 text-white rounded-xl shadow-md border border-primary-900 text-center">
-                  <span className="text-[10px] font-bold text-gold-400 uppercase tracking-wider block">
-                    {t('seat')}
+                <div className={`p-2.5 rounded-xl shadow-md text-center ${
+                  isCancelled
+                    ? 'bg-rose-950 text-white border border-rose-800'
+                    : 'bg-primary-950 text-white border border-primary-900'
+                }`}>
+                  <span className={`text-[10px] font-bold uppercase tracking-wider block ${
+                    isCancelled ? 'text-rose-300' : 'text-gold-400'
+                  }`}>
+                    {t('seat')} {isCancelled ? '(ĐÃ TRẢ)' : ''}
                   </span>
-                  <span className="text-lg font-black text-white font-mono block mt-0.5">
-                    {ticket.seat?.seatNumber || 'N/A'}
+                  <span className={`font-black font-mono block mt-0.5 ${
+                    isCancelled ? 'text-xs text-rose-200 py-1' : 'text-lg text-white'
+                  }`}>
+                    {isCancelled ? 'CHƯA ĐẶT' : (ticket.seat?.seatNumber || 'N/A')}
                   </span>
                 </div>
               </div>
@@ -655,8 +680,10 @@ export const BoardingPassCard: React.FC<BoardingPassProps> = ({
                       <span className="text-[10px] text-slate-400 uppercase block font-semibold">
                         {t('seat')}
                       </span>
-                      <strong className="text-primary-950 font-mono text-sm block font-black">
-                        {ticket.seat?.seatNumber || 'N/A'}
+                      <strong className={`font-mono block font-black ${
+                        isCancelled ? 'text-xs text-rose-600' : 'text-sm text-primary-950'
+                      }`}>
+                        {isCancelled ? 'TRẢ CHỖ' : (ticket.seat?.seatNumber || 'N/A')}
                       </strong>
                     </div>
                     <div>

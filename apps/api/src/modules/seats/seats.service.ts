@@ -36,6 +36,41 @@ export class SeatsService {
       },
     });
 
+    // Auto-release seats that belong to CANCELLED/EXPIRED bookings or orphaned seats
+    const bookedSeats = await this.prisma.seat.findMany({
+      where: { flightId, status: 'BOOKED' },
+      include: {
+        tickets: {
+          include: { booking: true },
+        },
+      },
+    });
+
+    const seatIdsToRelease: string[] = [];
+    for (const s of bookedSeats) {
+      if (s.tickets.length === 0) {
+        seatIdsToRelease.push(s.id);
+      } else {
+        const hasActiveBooking = s.tickets.some(
+          (t) => t.booking && t.booking.status !== 'CANCELLED' && t.booking.status !== 'EXPIRED',
+        );
+        if (!hasActiveBooking) {
+          seatIdsToRelease.push(s.id);
+        }
+      }
+    }
+
+    if (seatIdsToRelease.length > 0) {
+      await this.prisma.seat.updateMany({
+        where: { id: { in: seatIdsToRelease } },
+        data: {
+          status: 'AVAILABLE',
+          heldUntil: null,
+          heldBySessionId: null,
+        },
+      });
+    }
+
     const seats = await this.prisma.seat.findMany({
       where: { flightId },
       orderBy: [{ row: 'asc' }, { col: 'asc' }],

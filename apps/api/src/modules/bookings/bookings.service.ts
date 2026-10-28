@@ -427,14 +427,24 @@ export class BookingsService {
     const refundAmount = Math.max(0, booking.paidAmount - totalPenalty);
 
     const result = await this.prisma.$transaction(async (tx) => {
-      // 1. Release all booked seats back to AVAILABLE
+      // 1. Release all booked/held seats back to AVAILABLE immediately
       const seatIds = booking.tickets.map((t) => t.seatId);
-      await tx.seat.updateMany({
-        where: { id: { in: seatIds } },
+      if (seatIds.length > 0) {
+        await tx.seat.updateMany({
+          where: { id: { in: seatIds } },
+          data: {
+            status: 'AVAILABLE',
+            heldUntil: null,
+            heldBySessionId: null,
+          },
+        });
+      }
+
+      // Also mark all tickets as CANCELLED
+      await tx.ticket.updateMany({
+        where: { bookingId: booking.id },
         data: {
-          status: 'AVAILABLE',
-          heldUntil: null,
-          heldBySessionId: null,
+          status: 'CANCELLED',
         },
       });
 
@@ -699,29 +709,54 @@ export class BookingsService {
   }
 
   async updateBookingStatus(id: string, newStatus: string, reason: string, staffId: string) {
-    const booking = await this.prisma.booking.findUnique({ where: { id } });
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+      include: { tickets: true },
+    });
     if (!booking) {
       throw new NotFoundException('Không tìm thấy yêu cầu đặt vé');
     }
 
     const previousStatus = booking.status;
-    const updated = await this.prisma.booking.update({
-      where: { id },
-      data: { status: newStatus },
-    });
 
-    await this.prisma.bookingRequestLog.create({
-      data: {
-        bookingId: id,
-        staffId,
-        action: 'UPDATE_STATUS',
-        previousStatus,
-        newStatus,
-        reason: reason || 'Cập nhật bởi nhân viên nghiệp vụ',
-      },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      // If booking is cancelled or expired, release all seats back to AVAILABLE immediately
+      if (newStatus === 'CANCELLED' || newStatus === 'EXPIRED') {
+        const seatIds = booking.tickets.map((t) => t.seatId);
+        if (seatIds.length > 0) {
+          await tx.seat.updateMany({
+            where: { id: { in: seatIds } },
+            data: {
+              status: 'AVAILABLE',
+              heldUntil: null,
+              heldBySessionId: null,
+            },
+          });
+        }
+        await tx.ticket.updateMany({
+          where: { bookingId: booking.id },
+          data: { status: 'CANCELLED' },
+        });
+      }
 
-    return updated;
+      const updated = await tx.booking.update({
+        where: { id },
+        data: { status: newStatus },
+      });
+
+      await tx.bookingRequestLog.create({
+        data: {
+          bookingId: id,
+          staffId,
+          action: 'UPDATE_STATUS',
+          previousStatus,
+          newStatus,
+          reason: reason || 'Cập nhật bởi nhân viên nghiệp vụ',
+        },
+      });
+
+      return updated;
+    });
   }
 
   async sendTicketEmail(pnr: string, targetEmail?: string) {

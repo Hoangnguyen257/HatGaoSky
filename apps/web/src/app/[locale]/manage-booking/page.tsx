@@ -204,10 +204,30 @@ export default function ManageBookingPage() {
                     : 'bg-amber-100 text-amber-800'
                 }`}
               >
-                {booking.status}
+                {booking.status === 'CANCELLED' ? 'ĐÃ HỦY & HOÀN TIỀN' : booking.status}
               </span>
             </div>
           </div>
+
+          {/* Cancellation & Refund Alert Banner */}
+          {booking.status === 'CANCELLED' && (
+            <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-rose-800 dark:text-rose-200">
+              <div className="flex items-center gap-2.5">
+                <AlertCircle className="w-5 h-5 text-rose-600 flex-shrink-0" />
+                <div>
+                  <span className="font-extrabold block">ĐẶT CHỖ ĐÃ ĐƯỢC HỦY & HOÀN TIỀN THÀNH CÔNG</span>
+                  <span className="text-[11px] text-rose-600 dark:text-rose-300">
+                    Toàn bộ chỗ ngồi của mã đặt chỗ này đã được hoàn trả về trạng thái <strong>Chưa đặt (Available)</strong> trên hệ thống bay.
+                  </span>
+                </div>
+              </div>
+              {booking.cancelReason && (
+                <span className="px-3 py-1 bg-white dark:bg-slate-800 rounded-xl border border-rose-200 text-rose-700 dark:text-rose-300 font-semibold text-[11px]">
+                  Lý do: {booking.cancelReason}
+                </span>
+              )}
+            </div>
+          )}
 
           {/* Action buttons toolbar */}
           {booking.status !== 'CANCELLED' && (
