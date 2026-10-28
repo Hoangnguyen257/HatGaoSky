@@ -130,7 +130,7 @@ export default function ManageBookingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                {t('manage.lookupPnr')} * (Demo: <code className="text-primary-600">VSK89A</code>)
+                {t('manage.lookupPnr')} <span className="text-red-500 font-bold">*</span>
               </label>
               <input
                 type="text"
@@ -240,33 +240,33 @@ export default function ManageBookingPage() {
           {/* Tickets & Flights Information */}
           <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
             <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-              Chi tiết vé & Chỗ ngồi
+              {t('manage.ticketDetails')}
             </h3>
             <div className="space-y-3">
-              {booking.tickets?.map((t: any) => (
+              {booking.tickets?.map((tkt: any) => (
                 <div
-                  key={t.id}
+                  key={tkt.id}
                   className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4 text-xs"
                 >
                   <div>
                     <span className="font-extrabold text-sm text-slate-900 dark:text-white block">
-                      Vé: {t.ticketNumber} · Hạng {t.cabinClass}
+                      {t('manage.ticketNum')}: {tkt.ticketNumber} · {tkt.cabinClass}
                     </span>
                     <span className="text-slate-500 mt-1 block">
-                      Hành khách: <strong>{t.passenger?.lastName} {t.passenger?.firstName}</strong> ({t.passenger?.passengerType})
+                      {t('manage.passenger')}: <strong>{tkt.passenger?.lastName} {tkt.passenger?.firstName}</strong> ({tkt.passenger?.passengerType})
                     </span>
                   </div>
 
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <span className="text-slate-400 text-[10px] block">Ghế ngồi</span>
+                      <span className="text-slate-400 text-[10px] block">{t('manage.seatNumber')}</span>
                       <strong className="text-base font-black text-primary-900 dark:text-white">
-                        {t.seat?.seatNumber || 'N/A'}
+                        {tkt.seat?.seatNumber || 'N/A'}
                       </strong>
                     </div>
                     <div className="text-right">
-                      <span className="text-slate-400 text-[10px] block">Trạng thái vé</span>
-                      <span className="text-emerald-600 font-bold">{t.status}</span>
+                      <span className="text-slate-400 text-[10px] block">{t('manage.ticketStatus')}</span>
+                      <span className="text-emerald-600 font-bold">{tkt.status}</span>
                     </div>
                   </div>
                 </div>
@@ -277,13 +277,13 @@ export default function ManageBookingPage() {
           {/* Payment & Refund Summary */}
           <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs">
             <div>
-              <span className="text-slate-500">Tổng tiền đơn hàng: </span>
+              <span className="text-slate-500">{t('manage.totalAmount')}: </span>
               <strong className="text-slate-900 dark:text-white font-bold">
                 {booking.totalAmount?.toLocaleString('vi-VN')} VND
               </strong>
             </div>
             <div>
-              <span className="text-slate-500">Đã thanh toán: </span>
+              <span className="text-slate-500">{t('manage.paidAmount')}: </span>
               <strong className="text-emerald-600 font-bold">
                 {booking.paidAmount?.toLocaleString('vi-VN')} VND
               </strong>
@@ -301,7 +301,7 @@ export default function ManageBookingPage() {
               <span>{t('manage.cancelConfirm')}</span>
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-300">
-              Biểu phí phạt hủy vé theo quy định: <strong>300.000 VND / vé</strong>.
+              {t('manage.cancellationFeeNotice')}
             </p>
             <div>
               <label className="text-xs font-semibold text-slate-500 block mb-1">

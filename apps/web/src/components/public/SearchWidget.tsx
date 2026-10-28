@@ -75,23 +75,23 @@ export const SearchWidget: React.FC = () => {
     setErrorMessage(null);
 
     if (origin === destination) {
-      setErrorMessage('Điểm khởi hành và điểm đến không được trùng nhau');
+      setErrorMessage(t('search.sameOriginDest'));
       return;
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
     if (departureDate < todayStr) {
-      setErrorMessage('Ngày khởi hành không được ở quá khứ');
+      setErrorMessage(t('search.pastDeparture'));
       return;
     }
 
     if (isRoundTrip && returnDate < departureDate) {
-      setErrorMessage('Ngày về phải sau hoặc cùng ngày khởi hành');
+      setErrorMessage(t('search.invalidReturn'));
       return;
     }
 
     if (passengers < 1) {
-      setErrorMessage('Số lượng hành khách phải lớn hơn hoặc bằng 1');
+      setErrorMessage(t('search.minPassengers'));
       return;
     }
 
@@ -295,13 +295,13 @@ export const SearchWidget: React.FC = () => {
                 >
                   {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                     <option key={num} value={num}>
-                      {num} hành khách
+                      {num} {t('search.passengers').toLowerCase()}
                     </option>
                   ))}
                 </select>
               </div>
               <span className="text-xs text-slate-400 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-gold-500" /> Giá vé trực tiếp từ hãng
+                <Sparkles className="w-3.5 h-3.5 text-gold-500" /> {t('search.directPricingNote')}
               </span>
             </div>
           )}

@@ -593,20 +593,20 @@ export default function BookingWizardPage() {
                   <div className="mt-4 p-4 bg-amber-50/50 dark:bg-amber-950/20 rounded-2xl border border-amber-200 dark:border-amber-900 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                     <div>
                       <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                        Loại thú cưng
+                        {t('booking.petTypeLabel')}
                       </label>
                       <select
                         value={petType}
                         onChange={(e) => setPetType(e.target.value)}
                         className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 font-bold"
                       >
-                        <option value="DOG">Chó (Dog)</option>
-                        <option value="CAT">Mèo (Cat)</option>
+                        <option value="DOG">{t('booking.petDog')}</option>
+                        <option value="CAT">{t('booking.petCat')}</option>
                       </select>
                     </div>
                     <div>
                       <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                        Giống loài
+                        {t('booking.petBreedLabel')}
                       </label>
                       <input
                         type="text"
@@ -617,7 +617,7 @@ export default function BookingWizardPage() {
                     </div>
                     <div>
                       <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
-                        Trọng lượng (Tối đa 32kg)
+                        {t('booking.petWeightLabel')}
                       </label>
                       <input
                         type="number"
@@ -639,7 +639,7 @@ export default function BookingWizardPage() {
                   onClick={handleProceedFromStep1}
                   className="px-6 py-3 rounded-2xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs flex items-center gap-2 shadow-md transition cursor-pointer"
                 >
-                  <span>Tiếp tục: Chọn chỗ ngồi</span>
+                  <span>{t('booking.continueSeats')}</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -662,16 +662,16 @@ export default function BookingWizardPage() {
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer"
                 >
-                  <ArrowLeft className="w-4 h-4" /> Quay lại
+                  <ArrowLeft className="w-4 h-4" /> {t('booking.goBack')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="px-6 py-2.5 rounded-xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs flex items-center gap-2 shadow-md"
+                  className="px-6 py-2.5 rounded-xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs flex items-center gap-2 shadow-md cursor-pointer"
                 >
-                  <span>Tiếp tục: Dịch vụ bổ trợ</span>
+                  <span>{t('booking.continueServices')}</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -799,16 +799,16 @@ export default function BookingWizardPage() {
                 <button
                   type="button"
                   onClick={() => setStep(2)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer"
                 >
-                  <ArrowLeft className="w-4 h-4" /> Quay lại
+                  <ArrowLeft className="w-4 h-4" /> {t('booking.goBack')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep(4)}
-                  className="px-6 py-2.5 rounded-xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs flex items-center gap-2 shadow-md"
+                  className="px-6 py-2.5 rounded-xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs flex items-center gap-2 shadow-md cursor-pointer"
                 >
-                  <span>Tiếp tục: Xác nhận đơn hàng</span>
+                  <span>{t('booking.continueReview')}</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -902,16 +902,16 @@ export default function BookingWizardPage() {
                 <button
                   type="button"
                   onClick={() => setStep(3)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer"
                 >
-                  <ArrowLeft className="w-4 h-4" /> Quay lại
+                  <ArrowLeft className="w-4 h-4" /> {t('booking.goBack')}
                 </button>
                 <button
                   type="button"
                   onClick={() => setStep(5)}
-                  className="px-6 py-2.5 rounded-xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs flex items-center gap-2 shadow-md"
+                  className="px-6 py-2.5 rounded-xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs flex items-center gap-2 shadow-md cursor-pointer"
                 >
-                  <span>Tiếp tục: Thanh toán an toàn</span>
+                  <span>{t('booking.continuePayment')}</span>
                   <ChevronRight className="w-4 h-4" />
                 </button>
               </div>
@@ -1145,7 +1145,7 @@ export default function BookingWizardPage() {
                       </div>
                       <div>
                         <span className="font-bold text-emerald-900 dark:text-emerald-300 block">
-                          Quét mã VietQR để thanh toán tự động 24/7
+                          {t('booking.vietQrNotice')}
                         </span>
                         <p className="text-slate-500 mt-1">
                           Ngân hàng TMCP Ngoại Thương (Vietcombank) · Số TK: 9999 HATGAO SKY
@@ -1161,9 +1161,9 @@ export default function BookingWizardPage() {
                 <button
                   type="button"
                   onClick={() => setStep(4)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 cursor-pointer"
                 >
-                  <ArrowLeft className="w-4 h-4" /> Quay lại
+                  <ArrowLeft className="w-4 h-4" /> {t('booking.goBack')}
                 </button>
                 <button
                   type="button"

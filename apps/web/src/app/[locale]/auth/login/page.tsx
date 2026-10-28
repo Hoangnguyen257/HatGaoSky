@@ -41,8 +41,8 @@ export default function LoginPage() {
     }
   }, [user, router, locale, redirectUrl]);
 
-  const [email, setEmail] = useState('customer@vietsky.vn');
-  const [password, setPassword] = useState('Customer@123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   // Pre-fill email if user just finished registering with 3D ticket modal
   useEffect(() => {
@@ -121,13 +121,8 @@ export default function LoginPage() {
         router.push(`/${locale}`);
       }
     } catch (err: any) {
-      setMfaError(err.message || 'Mã OTP không chính xác. Vui lòng nhập: 123456');
+      setMfaError(err.message || 'Mã OTP không chính xác');
     }
-  };
-
-  const fillCredential = (em: string, pass: string) => {
-    setEmail(em);
-    setPassword(pass);
   };
 
   return (
@@ -178,15 +173,15 @@ export default function LoginPage() {
             </h1>
             <p className="text-xs text-slate-500">
               {redirectUrl
-                ? 'Quý khách vui lòng đăng nhập tài khoản để tiếp tục đặt vé máy bay'
-                : 'Truy cập tài khoản Hội viên Lotus Club hoặc Cổng vận hành nội bộ'}
+                ? t('auth.flightHeldNotice')
+                : t('auth.signInDesc')}
             </p>
           </div>
 
           {redirectUrl && (
             <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl flex items-center gap-2 text-xs text-blue-800 dark:text-blue-300">
               <Sparkles className="w-4 h-4 text-gold-500 flex-shrink-0" />
-              <span>Chuyến bay đã chọn đang được giữ. Vui lòng đăng nhập để hoàn tất đặt chỗ.</span>
+              <span>{t('auth.flightHeldNotice')}</span>
             </div>
           )}
 
@@ -200,7 +195,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Địa chỉ Email <span className="text-red-500 font-bold">*</span>
+                {t('auth.emailLabel')} <span className="text-red-500 font-bold">*</span>
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -220,7 +215,7 @@ export default function LoginPage() {
                     }
                   }}
                   onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
-                  placeholder="customer@hatgaosky.vn"
+                  placeholder="name@example.com"
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none"
                   required
                 />
@@ -230,13 +225,13 @@ export default function LoginPage() {
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Mật khẩu <span className="text-red-500 font-bold">*</span>
+                  {t('auth.passwordLabel')} <span className="text-red-500 font-bold">*</span>
                 </label>
                 <Link
                   href={`/${locale}/auth/forgot-password`}
                   className="text-[11px] text-primary-600 font-semibold hover:underline"
                 >
-                  Quên mật khẩu?
+                  {t('auth.forgotPassword')}
                 </Link>
               </div>
               <div className="relative">
@@ -265,52 +260,15 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs rounded-xl shadow-md transition"
+              className="w-full py-3 bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer"
             >
-              {loading ? 'Đang xác thực...' : 'Đăng nhập'}
+              {loading ? t('auth.authenticating') : t('auth.signInBtn')}
             </button>
           </form>
 
-          {/* Quick Demo Credentials */}
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-              Điền nhanh tài khoản Demo:
-            </span>
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <button
-                type="button"
-                onClick={() => fillCredential('customer@vietsky.vn', 'Customer@123456')}
-                className="p-1.5 bg-slate-50 dark:bg-slate-800 border rounded-lg text-left hover:border-primary-500 font-medium"
-              >
-                Customer (Hội viên)
-              </button>
-              <button
-                type="button"
-                onClick={() => fillCredential('staff@vietsky.vn', 'Staff@123456')}
-                className="p-1.5 bg-slate-50 dark:bg-slate-800 border rounded-lg text-left hover:border-primary-500 font-medium"
-              >
-                Staff (Nhân viên)
-              </button>
-              <button
-                type="button"
-                onClick={() => fillCredential('manager@vietsky.vn', 'Manager@123456')}
-                className="p-1.5 bg-slate-50 dark:bg-slate-800 border rounded-lg text-left hover:border-primary-500 font-medium"
-              >
-                Manager (Trưởng phòng)
-              </button>
-              <button
-                type="button"
-                onClick={() => fillCredential('admin@vietsky.vn', 'Admin@123456')}
-                className="p-1.5 bg-slate-50 dark:bg-slate-800 border rounded-lg text-left hover:border-primary-500 font-medium"
-              >
-                Admin (Quản trị)
-              </button>
-            </div>
-          </div>
-
           <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 text-center space-y-1.5">
             <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
-              Chưa có tài khoản Hội viên Hạt Gạo Sky?
+              {t('auth.noAccountYet')}
             </p>
             <button
               type="button"
@@ -323,7 +281,7 @@ export default function LoginPage() {
               }}
               className="inline-flex items-center gap-1.5 text-xs font-black text-primary-700 dark:text-gold-400 hover:underline cursor-pointer"
             >
-              <span>Đăng ký hội viên ngay</span>
+              <span>{t('auth.registerMemberNow')}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -339,10 +297,10 @@ export default function LoginPage() {
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Xác thực 2 bước (MFA)
+                {t('auth.mfaTitle')}
               </h3>
               <p className="text-xs text-slate-500">
-                Tài khoản quản trị/nhân viên yêu cầu mã xác thực OTP. Mã mặc định là: <strong className="text-purple-700">123456</strong>
+                {t('auth.mfaDesc')}
               </p>
             </div>
 
@@ -357,15 +315,15 @@ export default function LoginPage() {
                 value={otpCode}
                 onChange={(e) => setOtpCode(e.target.value)}
                 className="w-full text-center text-2xl tracking-widest font-mono font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 focus:outline-none"
-                placeholder="123456"
+                placeholder="••••••"
                 required
               />
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-primary-900 text-white font-bold text-xs rounded-xl shadow-md hover:bg-primary-800"
+                className="w-full py-2.5 bg-primary-900 text-white font-bold text-xs rounded-xl shadow-md hover:bg-primary-800 cursor-pointer"
               >
-                Xác nhận OTP & Đăng nhập
+                {t('auth.confirmOtp')}
               </button>
             </form>
           </div>

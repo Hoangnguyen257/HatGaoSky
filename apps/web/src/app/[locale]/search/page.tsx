@@ -127,7 +127,7 @@ export default function SearchResultsPage() {
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs font-bold text-primary-700 dark:text-primary-400">
             <Plane className="w-4 h-4" />
-            <span>Hạt Gạo Sky Direct Flights</span>
+            <span>{t('search.directFleet')}</span>
           </div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <span>{origin}</span>
@@ -136,20 +136,20 @@ export default function SearchResultsPage() {
             {returnDate && (
               <>
                 <span className="text-slate-300">|</span>
-                <span className="text-base text-slate-500 font-semibold">(Khứ hồi)</span>
+                <span className="text-base text-slate-500 font-semibold">{t('search.roundTripBadge')}</span>
               </>
             )}
           </h1>
           <p className="text-xs text-slate-500">
-            Khởi hành: <strong>{departureDate}</strong> {returnDate ? `· Về: ${returnDate}` : ''} · {passengers} hành khách · Hạng {cabinClass}
+            {t('search.departurePrefix')}: <strong>{departureDate}</strong> {returnDate ? `· ${t('search.returnPrefix')}: ${returnDate}` : ''} · {t('search.seatsCount', { count: passengers })} · {t('search.cabinClass')}: {cabinClass}
           </p>
         </div>
 
         <button
           onClick={() => router.push(`/${locale}`)}
-          className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition"
+          className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition cursor-pointer"
         >
-          Thay đổi tìm kiếm
+          {t('search.changeSearch')}
         </button>
       </div>
 
@@ -172,9 +172,9 @@ export default function SearchResultsPage() {
                   setMaxPrice(10000000);
                   fetchResults();
                 }}
-                className="text-[11px] font-semibold text-primary-600 hover:underline"
+                className="text-[11px] font-semibold text-primary-600 hover:underline cursor-pointer"
               >
-                Đặt lại
+                {t('search.resetFilter')}
               </button>
             </div>
 
@@ -246,19 +246,19 @@ export default function SearchResultsPage() {
               <button
                 type="button"
                 onClick={fetchResults}
-                className="w-full py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-primary-50 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold transition"
+                className="w-full py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-primary-50 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold transition cursor-pointer"
               >
-                Áp dụng khoảng giá
+                {t('search.applyPrice')}
               </button>
             </div>
 
             {/* Direct flight policy reminder */}
             <div className="p-3 bg-blue-50/60 dark:bg-blue-950/30 rounded-2xl border border-blue-100 dark:border-blue-900 text-[11px] text-blue-900 dark:text-blue-200 space-y-1">
               <span className="font-bold flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-gold-500" /> Hệ thống Hạt Gạo Sky
+                <Sparkles className="w-3.5 h-3.5 text-gold-500" /> {t('search.directFleet')}
               </span>
               <p className="text-slate-600 dark:text-slate-400">
-                Tất cả các chặng bay được vận hành 100% trực tiếp bởi Hạt Gạo Sky.
+                {t('search.directFleetDesc')}
               </p>
             </div>
           </div>
@@ -280,18 +280,18 @@ export default function SearchResultsPage() {
               <AlertCircle className="w-8 h-8 text-red-600 mx-auto" />
               <h3 className="text-base font-bold text-red-800 dark:text-red-200">
                 {error === 'Failed to fetch'
-                  ? 'Không thể kết nối đến máy chủ API (Máy chủ backend đang khởi động)'
+                  ? t('search.serverConnectError')
                   : error}
               </h3>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                Hệ thống đang kết nối lại với máy chủ chuyến bay. Quý khách vui lòng nhấn nút bên dưới để thử lại.
+                {t('search.reconnectNotice')}
               </p>
               <button
                 type="button"
                 onClick={fetchResults}
                 className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-900 hover:bg-primary-800 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer"
               >
-                <span>Thử lại ngay</span>
+                <span>{t('search.retryNow')}</span>
               </button>
             </div>
           ) : searchResult?.outboundFlights?.length === 0 ? (
@@ -301,13 +301,13 @@ export default function SearchResultsPage() {
                 {t('search.noFlightsFound')}
               </h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Hiện tại không có chuyến bay trực tiếp trên tuyến đường này vào ngày đã chọn. Quý khách vui lòng thử tìm kiếm ngày khởi hành khác.
+                {t('search.noFlightsAdvice')}
               </p>
               <button
                 onClick={() => router.push(`/${locale}`)}
-                className="px-6 py-2.5 rounded-xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs"
+                className="px-6 py-2.5 rounded-xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs cursor-pointer"
               >
-                Về trang chủ chọn lại ngày
+                {t('search.backHomeSelectDate')}
               </button>
             </div>
           ) : (
@@ -316,11 +316,7 @@ export default function SearchResultsPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
                   <span>
-                    Chuyến bay chiều đi (Tìm thấy{' '}
-                    <strong className="text-primary-800 dark:text-primary-300">
-                      {searchResult.outboundFlights.length}
-                    </strong>{' '}
-                    chuyến)
+                    {t('search.outboundTitle', { count: searchResult.outboundFlights.length })}
                   </span>
                 </div>
                 {searchResult.outboundFlights.map((flight: any) => (
@@ -339,11 +335,11 @@ export default function SearchResultsPage() {
                 <div className="space-y-3 pt-6 border-t border-slate-200 dark:border-slate-800">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
                     <span>
-                      Chuyến bay chiều về ({destination} ➔ {origin}) · Tìm thấy{' '}
-                      <strong className="text-primary-800 dark:text-primary-300">
-                        {searchResult.returnFlights.length}
-                      </strong>{' '}
-                      chuyến
+                      {t('search.returnTitle', {
+                        origin: destination,
+                        destination: origin,
+                        count: searchResult.returnFlights.length,
+                      })}
                     </span>
                   </div>
                   {searchResult.returnFlights.map((flight: any) => (

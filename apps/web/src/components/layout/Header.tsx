@@ -27,10 +27,9 @@ export const Header: React.FC = () => {
   const t = useTranslations();
   const locale = useLocale();
   const pathname = usePathname();
-  const { user, role, logout, switchRoleDemo, openLoginModal, openRegisterModal } = useAuth();
+  const { user, role, logout, openLoginModal, openRegisterModal } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
-  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
   const toggleDarkMode = () => {
@@ -57,17 +56,9 @@ export const Header: React.FC = () => {
     }
   };
 
-  const rolesList: { role: UserRole; label: string; icon: any }[] = [
-    { role: 'GUEST', label: 'Guest (Khách vãng lai)', icon: Globe },
-    { role: 'CUSTOMER', label: 'Customer (Hội viên An - Platinum)', icon: User },
-    { role: 'STAFF', label: 'Staff (Nhân viên khai thác)', icon: Briefcase },
-    { role: 'STAFF_MANAGER', label: 'Staff Manager (Trưởng phòng)', icon: BarChart3 },
-    { role: 'ADMIN', label: 'Admin (Quản trị hệ thống)', icon: ShieldCheck },
-  ];
-
   return (
     <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors shadow-sm">
-      {/* Top Banner / Role Demo Switcher Bar */}
+      {/* Top Banner Bar */}
       <div className="bg-gradient-to-r from-primary-900 via-primary-800 to-primary-950 text-white px-4 py-1.5 text-xs flex flex-wrap justify-between items-center">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1 font-semibold text-gold-400">
@@ -79,43 +70,8 @@ export const Header: React.FC = () => {
           </span>
         </div>
 
-        {/* Quick Role Switcher */}
-        <div className="flex items-center gap-2">
-          <span className="text-slate-300 font-medium hidden sm:inline">
-            {t('nav.roleSwitcher')}:
-          </span>
-          <div className="relative">
-            <button
-              onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-              className="bg-white/10 hover:bg-white/20 text-white px-2.5 py-0.5 rounded-full flex items-center gap-1.5 transition border border-white/20"
-            >
-              <span className="font-semibold text-gold-400">{role}</span>
-              <ChevronDown className="w-3 h-3" />
-            </button>
-
-            {roleMenuOpen && (
-              <div className="absolute right-0 mt-1 w-64 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 py-1 text-slate-800 dark:text-slate-100 z-50">
-                <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-700 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                  Chọn quyền truy cập (Demo RBAC)
-                </div>
-                {rolesList.map((item) => (
-                  <button
-                    key={item.role}
-                    onClick={() => {
-                      switchRoleDemo(item.role);
-                      setRoleMenuOpen(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-primary-50 dark:hover:bg-slate-700 transition ${
-                      role === item.role ? 'bg-primary-100/50 dark:bg-slate-700/50 font-bold text-primary-900 dark:text-primary-300' : ''
-                    }`}
-                  >
-                    <item.icon className="w-4 h-4 text-primary-600" />
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="flex items-center gap-3 text-slate-300 text-xs">
+          <span className="hidden sm:inline font-medium text-slate-300">{t('brand.tagline')}</span>
         </div>
       </div>
 

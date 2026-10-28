@@ -28,15 +28,15 @@ export const LoginModal: React.FC = () => {
   const searchParams = useSearchParams();
   const { isLoginModalOpen, closeLoginModal, openRegisterModal, login, verifyMfa } = useAuth();
 
-  const [email, setEmail] = useState('customer@vietsky.vn');
-  const [password, setPassword] = useState('Customer@123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // MFA OTP Modal state for Staff/Manager/Admin
   const [mfaRequired, setMfaRequired] = useState(false);
   const [mfaSessionToken, setMfaSessionToken] = useState('');
-  const [otpCode, setOtpCode] = useState('123456');
+  const [otpCode, setOtpCode] = useState('');
   const [mfaError, setMfaError] = useState<string | null>(null);
 
   // Animation states
@@ -160,15 +160,9 @@ export const LoginModal: React.FC = () => {
         }
       }
     } catch (err: any) {
-      setMfaError(err.message || 'Mã OTP không chính xác. Mặc định là: 123456');
+      setMfaError(err.message || 'Mã OTP không chính xác');
       setLoading(false);
     }
-  };
-
-  const fillCredential = (em: string, pass: string) => {
-    setEmail(em);
-    setPassword(pass);
-    if (!isLanded) setIsLanded(true);
   };
 
   if (!isLoginModalOpen || !mounted) return null;
@@ -348,10 +342,10 @@ export const LoginModal: React.FC = () => {
                   <ShieldCheck className="w-5 h-5" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Xác thực 2 bước (MFA)
+                  {t('auth.mfaTitle')}
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  Tài khoản nội bộ yêu cầu OTP. Mã demo: <strong className="text-purple-600">123456</strong>
+                  {t('auth.mfaDesc')}
                 </p>
               </div>
 
@@ -366,65 +360,24 @@ export const LoginModal: React.FC = () => {
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value)}
                   className="w-full text-center text-2xl tracking-widest font-mono font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  placeholder="123456"
+                  placeholder="••••••"
                   required
                 />
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-2.5 bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs rounded-xl shadow-md transition"
+                  className="w-full py-2.5 bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer"
                 >
-                  {loading ? 'Đang xác nhận...' : 'Xác nhận OTP & Vào hệ thống'}
+                  {loading ? t('common.loading') : t('auth.confirmOtp')}
                 </button>
               </form>
             </div>
           )}
 
-          {/* 1-Click Demo Accounts */}
-          <div className="pt-4 mt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              Tài khoản mẫu (1-Click Demo):
-            </span>
-            <div className="grid grid-cols-2 gap-1.5 text-[11px]">
-              <button
-                type="button"
-                onClick={() => fillCredential('customer@vietsky.vn', 'Customer@123456')}
-                className="p-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-left hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-slate-700 transition font-medium flex items-center justify-between"
-              >
-                <span>Hội viên</span>
-                <span className="text-[9px] text-primary-600 font-bold">Lotus</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillCredential('staff@vietsky.vn', 'Staff@123456')}
-                className="p-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-left hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-slate-700 transition font-medium flex items-center justify-between"
-              >
-                <span>Nhân viên</span>
-                <span className="text-[9px] text-blue-600 font-bold">Staff</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillCredential('manager@vietsky.vn', 'Manager@123456')}
-                className="p-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-left hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-slate-700 transition font-medium flex items-center justify-between"
-              >
-                <span>Trưởng phòng</span>
-                <span className="text-[9px] text-purple-600 font-bold">Manager</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillCredential('admin@vietsky.vn', 'Admin@123456')}
-                className="p-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-left hover:border-primary-500 hover:bg-primary-50/50 dark:hover:bg-slate-700 transition font-medium flex items-center justify-between"
-              >
-                <span>Quản trị viên</span>
-                <span className="text-[9px] text-emerald-600 font-bold">Admin</span>
-              </button>
-            </div>
-          </div>
-
           {/* Footer Note & Registration link */}
           <div className="text-center text-xs text-slate-500 dark:text-slate-400 mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
-            Chưa có tài khoản?{' '}
+            {t('auth.noAccountYet')}{' '}
             <button
               type="button"
               onClick={(e) => {
@@ -437,7 +390,7 @@ export const LoginModal: React.FC = () => {
               }}
               className="font-bold text-primary-600 dark:text-gold-400 hover:underline cursor-pointer"
             >
-              Đăng ký hội viên ngay
+              {t('auth.registerMemberNow')}
             </button>
           </div>
         </div>

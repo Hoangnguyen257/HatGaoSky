@@ -25,23 +25,23 @@ export default function HomePage() {
   const promoCards = [
     {
       code: 'VIETSKY2026',
-      title: 'Giảm 10% toàn mạng bay nội địa',
-      desc: 'Áp dụng cho mọi chuyến bay khởi hành trong năm 2026 khi đặt trực tiếp tại website.',
-      badge: 'Phổ biến nhất',
+      title: t('home.promo1Title'),
+      desc: t('home.promo1Desc'),
+      badge: t('home.promo1Badge'),
       color: 'from-blue-600 to-primary-900',
     },
     {
       code: 'FLYBUSINESS',
-      title: 'Ưu đãi 500.000 VND Hạng Thương gia',
-      desc: 'Trải nghiệm ghế nằm phẳng, ẩm thực thượng hạng và lối đi ưu tiên SkyPriority.',
-      badge: 'Đặc quyền',
+      title: t('home.promo2Title'),
+      desc: t('home.promo2Desc'),
+      badge: t('home.promo2Badge'),
       color: 'from-purple-700 to-indigo-950',
     },
     {
       code: 'GOLDMEMBER',
-      title: 'Đặc quyền 15% Hội viên Vàng & Bạch Kim',
-      desc: 'Nhân đôi dặm thưởng tích lũy và miễn phí thêm 1 kiện hành lý ký gửi.',
-      badge: 'Lotus Club',
+      title: t('home.promo3Title'),
+      desc: t('home.promo3Desc'),
+      badge: t('home.promo3Badge'),
       color: 'from-amber-600 to-yellow-950',
     },
   ];
@@ -140,9 +140,9 @@ export default function HomePage() {
               <Tag className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white">Giá gốc từ Hãng</h3>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">{t('home.feature1Title')}</h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Không phí dịch vụ trung gian, minh bạch 100% thuế phí trước khi thanh toán.
+                {t('home.feature1Desc')}
               </p>
             </div>
           </div>
@@ -152,9 +152,9 @@ export default function HomePage() {
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white">Tích dặm Lotus Club</h3>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">{t('home.feature4Title')}</h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Tích lũy dặm trên từng chặng bay, đổi vé thưởng, nâng hạng ghế và hành lý miễn phí.
+                {t('home.feature4Desc')}
               </p>
             </div>
           </div>
@@ -164,9 +164,9 @@ export default function HomePage() {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white">Đổi vé & Hoàn tiền Online</h3>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">{t('home.feature2Title')}</h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Tự quản lý đặt chỗ theo mã PNR, đổi giờ bay hoặc hủy vé nhận hoàn tiền tự động 24/7.
+                {t('home.feature2Desc')}
               </p>
             </div>
           </div>
@@ -176,9 +176,9 @@ export default function HomePage() {
               <Plane className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-bold text-sm text-slate-900 dark:text-white">Đội bay hiện đại</h3>
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">{t('home.feature3Title')}</h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Khai thác Boeing 787-9 Dreamliner & Airbus A350 với không gian khoang rộng rãi.
+                {t('home.feature3Desc')}
               </p>
             </div>
           </div>
@@ -285,10 +285,10 @@ export default function HomePage() {
               <Award className="w-4 h-4 text-gold-400" /> Lotus Club Frequent Flyer
             </span>
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
-              Gia nhập Hội viên Lotus Club — Tích dặm không giới hạn
+              {t('home.lotusBannerTitle')}
             </h2>
             <p className="text-sm text-slate-300 leading-relaxed">
-              Nhận ngay 1.000 dặm thưởng chào mừng khi đăng ký tài khoản. Đổi vé máy bay miễn phí, vào phòng chờ Lotus Lounge hạng sang và nâng hạng ghế dễ dàng.
+              {t('home.lotusBannerSubtitle')}
             </p>
             <div className="pt-2 flex flex-wrap gap-4">
               <button
@@ -302,13 +302,13 @@ export default function HomePage() {
                 }}
                 className="px-6 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-slate-900 font-bold text-sm shadow-md transition cursor-pointer"
               >
-                Đăng ký Hội viên miễn phí
+                {t('home.joinLotusFree')}
               </button>
               <Link
                 href={`/${locale}/customer/loyalty`}
                 className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition"
               >
-                Khám phá quyền lợi hội viên
+                {t('home.exploreBenefits')}
               </Link>
             </div>
           </div>

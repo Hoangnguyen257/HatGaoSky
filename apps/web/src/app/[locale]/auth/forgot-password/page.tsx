@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
                   href={`/${locale}/auth/reset-password?token=${result.resetToken}`}
                   className="inline-block px-4 py-2 bg-primary-900 text-white rounded-xl text-xs font-bold"
                 >
-                  Đặt lại mật khẩu ngay (Demo Token)
+                  Đặt lại mật khẩu ngay
                 </Link>
               </div>
             )}

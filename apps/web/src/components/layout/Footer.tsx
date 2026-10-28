@@ -24,20 +24,20 @@ export const Footer: React.FC = () => {
               </span>
             </div>
             <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
-              Hãng hàng không Hạt Gạo Sky — Đặt vé máy bay trực tiếp với giá gốc minh bạch, không phí ẩn. Trải nghiệm dịch vụ 5 sao, đội bay thế hệ mới Boeing 787-9 & Airbus A350.
+              {t('footer.brandDesc')}
             </p>
             <div className="space-y-2 text-xs text-slate-400">
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-gold-400" />
-                <span>Tổng đài 24/7: <strong className="text-white">1900 6868</strong></span>
+                <span>{t('footer.hotline247')}: <strong className="text-white">{t('brand.hotline')}</strong></span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-gold-400" />
-                <span>Email hỗ trợ: <strong className="text-white">contact@vietsky.vn</strong></span>
+                <span>{t('footer.supportEmail')}: <strong className="text-white">{t('brand.email')}</strong></span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-gold-400" />
-                <span>Trụ sở chính: Sân bay Quốc tế Tân Sơn Nhất, TP. Hồ Chí Minh</span>
+                <span>{t('footer.headquarters')}</span>
               </div>
             </div>
           </div>
@@ -45,7 +45,7 @@ export const Footer: React.FC = () => {
           {/* Col 2: Domestic Routes */}
           <div>
             <h4 className="text-white font-bold text-sm mb-4 uppercase tracking-wider text-gold-400">
-              Tuyến bay nội địa
+              {t('footer.domesticRoutes')}
             </h4>
             <ul className="space-y-2 text-xs text-slate-400">
               <li><Link href={`/${locale}/search?origin=SGN&destination=HAN&departureDate=2026-10-28`} className="hover:text-white transition">Hồ Chí Minh ➔ Hà Nội</Link></li>
@@ -59,7 +59,7 @@ export const Footer: React.FC = () => {
           {/* Col 3: International Routes */}
           <div>
             <h4 className="text-white font-bold text-sm mb-4 uppercase tracking-wider text-gold-400">
-              Tuyến bay quốc tế
+              {t('footer.internationalRoutes')}
             </h4>
             <ul className="space-y-2 text-xs text-slate-400">
               <li><Link href={`/${locale}/search?origin=SGN&destination=BKK&departureDate=2026-10-28`} className="hover:text-white transition">Hồ Chí Minh ➔ Bangkok</Link></li>
@@ -72,25 +72,25 @@ export const Footer: React.FC = () => {
           {/* Col 4: Services & Assurance */}
           <div>
             <h4 className="text-white font-bold text-sm mb-4 uppercase tracking-wider text-gold-400">
-              Chính sách & An toàn
+              {t('footer.policySafety')}
             </h4>
             <ul className="space-y-2 text-xs text-slate-400">
-              <li className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Thanh toán bảo mật chuẩn PCI-DSS</li>
-              <li className="flex items-center gap-1.5"><Award className="w-3.5 h-3.5 text-gold-400" /> Thành viên liên minh SkyTeam</li>
-              <li className="flex items-center gap-1.5"><HeartHandshake className="w-3.5 h-3.5 text-blue-400" /> Hỗ trợ đổi trả theo fare rules</li>
-              <li><Link href={`/${locale}/manage-booking`} className="hover:text-white transition">Tra cứu mã PNR</Link></li>
-              <li><Link href={`/${locale}/customer/loyalty`} className="hover:text-white transition">Quy chế hội viên Lotus Club</Link></li>
+              <li className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> {t('footer.securePayment')}</li>
+              <li className="flex items-center gap-1.5"><Award className="w-3.5 h-3.5 text-gold-400" /> {t('footer.skyteam')}</li>
+              <li className="flex items-center gap-1.5"><HeartHandshake className="w-3.5 h-3.5 text-blue-400" /> {t('footer.farePolicy')}</li>
+              <li><Link href={`/${locale}/manage-booking`} className="hover:text-white transition">{t('footer.pnrSearch')}</Link></li>
+              <li><Link href={`/${locale}/customer/loyalty`} className="hover:text-white transition">{t('footer.lotusCharter')}</Link></li>
             </ul>
           </div>
         </div>
 
         {/* Bottom copyright */}
         <div className="pt-8 border-t border-slate-900 flex flex-col md:flex-row justify-between items-center text-xs text-slate-500 gap-4">
-          <p>© 2026 Hạt Gạo Sky Corporation. All rights reserved. Official Direct Airline Booking System.</p>
+          <p>{t('footer.copyright')}</p>
           <div className="flex gap-6">
-            <span className="hover:text-slate-400 cursor-pointer">Điều khoản sử dụng</span>
-            <span className="hover:text-slate-400 cursor-pointer">Chính sách bảo mật GDPR</span>
-            <span className="hover:text-slate-400 cursor-pointer">Điều lệ vận chuyển</span>
+            <span className="hover:text-slate-400 cursor-pointer">{t('footer.termsOfUse')}</span>
+            <span className="hover:text-slate-400 cursor-pointer">{t('footer.privacyGdpr')}</span>
+            <span className="hover:text-slate-400 cursor-pointer">{t('footer.conditionsCarriage')}</span>
           </div>
         </div>
       </div>

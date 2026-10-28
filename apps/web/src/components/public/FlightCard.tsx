@@ -44,7 +44,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
             {flight.aircraft?.model || 'Boeing 787-9'}
           </span>
           <span className="text-emerald-700 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded text-[11px] font-bold">
-            Bay thẳng
+            {t('search.directNonStop')}
           </span>
         </div>
 
@@ -58,7 +58,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
           }`}
         >
           <CheckCircle2 className={`w-3.5 h-3.5 ${isComparing ? 'text-slate-900' : 'text-slate-400'}`} />
-          <span>{isComparing ? 'Đã chọn so sánh' : '+ So sánh'}</span>
+          <span>{isComparing ? t('search.compared') : t('search.addToCompare')}</span>
         </button>
       </div>
 
@@ -87,7 +87,9 @@ export const FlightCard: React.FC<FlightCardProps> = ({
                 <Plane className="w-4 h-4 text-primary-600 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2" />
               </div>
             </div>
-            <span className="text-[10px] text-emerald-600 font-semibold mt-1">Đúng giờ</span>
+            <span className="text-[10px] text-emerald-600 font-semibold mt-1">
+              {t('search.onTime')}
+            </span>
           </div>
 
           {/* Arrival */}
@@ -133,7 +135,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
                       {fare.cabinClass}
                     </span>
                     <span className="text-[10px] text-slate-400">
-                      {fare.availableSeats} chỗ
+                      {t('search.seatsCount', { count: fare.availableSeats })}
                     </span>
                   </div>
                   <div className="text-sm font-black text-slate-900 dark:text-white">
@@ -142,14 +144,19 @@ export const FlightCard: React.FC<FlightCardProps> = ({
                   </div>
                   <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-1">
                     <Luggage className="w-3 h-3 text-slate-400" />
-                    <span>{fare.baggageAllowanceKg}kg ký gửi + {fare.cabinBaggageKg}kg xách tay</span>
+                    <span>
+                      {t('search.baggageDesc', {
+                        checked: fare.baggageAllowanceKg,
+                        carry: fare.cabinBaggageKg,
+                      })}
+                    </span>
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => onSelectFare(flight, fare.cabinClass, fare)}
-                  className={`mt-3 w-full py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 ${
+                  className={`mt-3 w-full py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer ${
                     isBusiness
                       ? 'bg-purple-700 hover:bg-purple-800 text-white shadow-sm'
                       : isFirst
@@ -157,7 +164,7 @@ export const FlightCard: React.FC<FlightCardProps> = ({
                       : 'bg-primary-900 hover:bg-primary-800 text-white'
                   }`}
                 >
-                  <span>Chọn vé</span>
+                  <span>{t('search.selectFareBtn')}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
