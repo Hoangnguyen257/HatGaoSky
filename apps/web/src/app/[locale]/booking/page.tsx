@@ -386,7 +386,7 @@ export default function BookingWizardPage() {
       {/* Main Wizard Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Active Step Form */}
-        <div className="lg:col-span-8 space-y-6">
+        <div className={`${step === 6 ? 'lg:col-span-12' : 'lg:col-span-8'} space-y-6`}>
           {errorMessage && (
             <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-2xl flex items-center gap-3 text-xs text-red-700 dark:text-red-300">
               <AlertCircle className="w-5 h-5 flex-shrink-0" />
@@ -1359,56 +1359,58 @@ export default function BookingWizardPage() {
           )}
         </div>
 
-        {/* Right Column: Price Breakdown Sticky Card */}
-        <div className="lg:col-span-4 sticky top-24 space-y-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
-            <h3 className="font-extrabold text-sm text-slate-900 dark:text-white pb-3 border-b border-slate-100 dark:border-slate-800">
-              {t('booking.priceBreakdown')}
-            </h3>
+        {/* Right Column: Price Breakdown Sticky Card (Hidden on Confirmation Step 6 for full-width horizontal passes) */}
+        {step < 6 && (
+          <div className="lg:col-span-4 sticky top-24 space-y-4">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-sm space-y-4">
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white pb-3 border-b border-slate-100 dark:border-slate-800">
+                {t('booking.priceBreakdown')}
+              </h3>
 
-            <div className="space-y-2.5 text-xs">
-              <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>{t('booking.baseFare')} ({passengers.length} pax)</span>
-                <span className="font-bold text-slate-900 dark:text-white">
-                  {baseFareTotal.toLocaleString('vi-VN')} VND
-                </span>
-              </div>
-
-              <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                <span>{t('booking.taxesAndFees')}</span>
-                <span className="font-bold text-slate-900 dark:text-white">
-                  {taxesAndFees.toLocaleString('vi-VN')} VND
-                </span>
-              </div>
-
-              {servicesTotal > 0 && (
+              <div className="space-y-2.5 text-xs">
                 <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                  <span>{t('booking.servicesFee')}</span>
+                  <span>{t('booking.baseFare')} ({passengers.length} pax)</span>
                   <span className="font-bold text-slate-900 dark:text-white">
-                    +{servicesTotal.toLocaleString('vi-VN')} VND
+                    {baseFareTotal.toLocaleString('vi-VN')} VND
                   </span>
                 </div>
-              )}
 
-              {discountAmount > 0 && (
-                <div className="flex justify-between text-emerald-600 font-bold">
-                  <span>{t('booking.discount')}</span>
-                  <span>-{discountAmount.toLocaleString('vi-VN')} VND</span>
+                <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                  <span>{t('booking.taxesAndFees')}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {taxesAndFees.toLocaleString('vi-VN')} VND
+                  </span>
                 </div>
-              )}
 
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-baseline">
-                <span className="text-sm font-black text-slate-900 dark:text-white">
-                  {t('booking.grandTotal')}
-                </span>
-                <span className="text-xl font-black text-primary-900 dark:text-gold-400">
-                  {grandTotal.toLocaleString('vi-VN')}{' '}
-                  <span className="text-xs font-normal text-slate-500">VND</span>
-                </span>
+                {servicesTotal > 0 && (
+                  <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                    <span>{t('booking.servicesFee')}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      +{servicesTotal.toLocaleString('vi-VN')} VND
+                    </span>
+                  </div>
+                )}
+
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-600 font-bold">
+                    <span>{t('booking.discount')}</span>
+                    <span>-{discountAmount.toLocaleString('vi-VN')} VND</span>
+                  </div>
+                )}
+
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-between items-baseline">
+                  <span className="text-sm font-black text-slate-900 dark:text-white">
+                    {t('booking.grandTotal')}
+                  </span>
+                  <span className="text-xl font-black text-primary-900 dark:text-gold-400">
+                    {grandTotal.toLocaleString('vi-VN')}{' '}
+                    <span className="text-xs font-normal text-slate-500">VND</span>
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -116,7 +116,7 @@ export default function ManageBookingPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-2">
         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
