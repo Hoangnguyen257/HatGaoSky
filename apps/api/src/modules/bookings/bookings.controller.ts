@@ -73,6 +73,15 @@ export class BookingsController {
     return this.bookingsService.addCheckedBaggage(pnr, dto);
   }
 
+  @Post(':pnr/send-ticket-email')
+  @ApiOperation({ summary: 'Send electronic ticket and boarding pass directly to real email' })
+  sendTicketEmail(
+    @Param('pnr') pnr: string,
+    @Body('email') email?: string,
+  ) {
+    return this.bookingsService.sendTicketEmail(pnr, email);
+  }
+
   @Get('requests')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('STAFF', 'STAFF_MANAGER', 'ADMIN')

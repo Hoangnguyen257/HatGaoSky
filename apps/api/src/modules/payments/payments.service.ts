@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailAdapter } from '../../common/adapters/email.adapter';
 import { PaymentGatewayAdapter } from '../../common/adapters/payment-gateway.adapter';
+import { generateTicketEmailHtml } from '../../common/templates/ticket-email.template';
 import { CheckoutDto, WebhookCallbackDto } from './dto/payment.dto';
 
 @Injectable()
@@ -220,21 +221,39 @@ export class PaymentsService {
     }, { maxWait: 10000, timeout: 20000 });
 
     // Asynchronously dispatch payment confirmation email outside transaction
-    this.emailAdapter.sendEmail({
-      to: result.customerEmail,
-      subject: `Biên nhận thanh toán thành công - PNR: ${result.pnr}`,
-      template: 'PAYMENT_SUCCESS',
-      htmlContent: `
-        <h2>VietSky Airlines xác nhận thanh toán thành công</h2>
-        <p>Mã đặt chỗ: <strong>${result.pnr}</strong></p>
-        <p>Mã giao dịch: <strong>${result.transactionCode}</strong></p>
-        <p>Phương thức: <strong>${dto.method}</strong></p>
-        <p>Số tiền đã thanh toán: <strong>${result.amountPaid.toLocaleString('vi-VN')} VND</strong></p>
-        <p>Số dư còn lại: <strong>${result.balanceDue.toLocaleString('vi-VN')} VND</strong></p>
-        <p>Trạng thái đặt chỗ: <strong>${result.bookingStatus === 'CONFIRMED' ? 'Đã xác nhận & Xuất vé' : 'Đã thanh toán một phần'}</strong></p>
-        ${result.firstFlightNumber ? `<p>Hành trình: ${result.firstFlightNumber} (${result.routeSummary})</p>` : ''}
-      `,
-    }).catch(console.error);
+    (async () => {
+      try {
+        const fullBooking = await this.prisma.booking.findUnique({
+          where: { id: booking.id },
+          include: {
+            passengers: true,
+            tickets: {
+              include: {
+                passenger: true,
+                flight: {
+                  include: { originAirport: true, destinationAirport: true, aircraft: true },
+                },
+                seat: true,
+              },
+            },
+            payments: true,
+          },
+        });
+
+        const htmlContent = fullBooking
+          ? generateTicketEmailHtml(fullBooking)
+          : `<h2>Hạt Gạo Sky xác nhận thanh toán thành công</h2><p>Mã đặt chỗ: <strong>${result.pnr}</strong></p><p>Số tiền đã thanh toán: <strong>${result.amountPaid.toLocaleString('vi-VN')} VND</strong></p>`;
+
+        await this.emailAdapter.sendEmail({
+          to: result.customerEmail,
+          subject: `[Hạt Gạo Sky] Xác nhận thanh toán & Vé máy bay điện tử - PNR: ${result.pnr}`,
+          template: 'PAYMENT_SUCCESS',
+          htmlContent,
+        });
+      } catch (e) {
+        console.error('Failed to dispatch payment confirmation email:', e);
+      }
+    })();
 
     return result;
   }

@@ -334,6 +334,12 @@
     "status": "TRẠNG THÁI",
     "idPassport": "CCCD / HỘ CHIẾU",
     "directFlight": "Bay thẳng",
-    "downloadPass": "Lưu thẻ / Tải ảnh"
+    "downloadPass": "Lưu thẻ / Tải ảnh",
+    "sendEmail": "Gửi qua Email",
+    "sendEmailTitle": "Gửi vé máy bay qua Email",
+    "sendEmailDesc": "Hệ thống sẽ gửi Thẻ lên tàu bay điện tử & mã PNR đến hòm thư thực của quý khách.",
+    "recipientEmail": "Địa chỉ email người nhận",
+    "sendNow": "Gửi vé ngay",
+    "sending": "Đang gửi vé..."
   }
 }

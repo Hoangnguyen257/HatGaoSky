@@ -334,6 +334,12 @@
     "status": "STATUS",
     "idPassport": "ID / PASSPORT",
     "directFlight": "Non-stop",
-    "downloadPass": "Save Boarding Pass"
+    "downloadPass": "Save Boarding Pass",
+    "sendEmail": "Send to Email",
+    "sendEmailTitle": "Send Ticket to Email",
+    "sendEmailDesc": "The system will send the Electronic Boarding Pass & PNR to your actual email inbox.",
+    "recipientEmail": "Recipient Email Address",
+    "sendNow": "Send Ticket Now",
+    "sending": "Sending..."
   }
 }

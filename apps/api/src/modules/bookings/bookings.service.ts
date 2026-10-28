@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailAdapter } from '../../common/adapters/email.adapter';
 import { PaymentGatewayAdapter } from '../../common/adapters/payment-gateway.adapter';
+import { generateTicketEmailHtml } from '../../common/templates/ticket-email.template';
 import {
   CreateBookingDto,
   LookupBookingDto,
@@ -721,5 +722,51 @@ export class BookingsService {
     });
 
     return updated;
+  }
+
+  async sendTicketEmail(pnr: string, targetEmail?: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { pnr: pnr.toUpperCase().trim() },
+      include: {
+        passengers: true,
+        tickets: {
+          include: {
+            passenger: true,
+            flight: {
+              include: { originAirport: true, destinationAirport: true, aircraft: true },
+            },
+            seat: true,
+          },
+        },
+        payments: true,
+        services: true,
+      },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Không tìm thấy thông tin đặt chỗ');
+    }
+
+    const emailToSend = (targetEmail || booking.customerEmail).toLowerCase().trim();
+    if (!emailToSend || !emailToSend.includes('@')) {
+      throw new BadRequestException('Địa chỉ email không hợp lệ');
+    }
+
+    const htmlContent = generateTicketEmailHtml(booking);
+
+    const sent = await this.emailAdapter.sendEmail({
+      to: emailToSend,
+      subject: `[Hạt Gạo Sky] Thẻ lên tàu bay điện tử & Vé máy bay - PNR: ${booking.pnr}`,
+      template: 'TICKET_BOARDING_PASS',
+      htmlContent,
+    });
+
+    return {
+      success: true,
+      sentViaRealSmtp: sent,
+      recipient: emailToSend,
+      pnr: booking.pnr,
+      message: `Vé điện tử và Thẻ lên tàu bay đã được gửi thành công đến ${emailToSend}!`,
+    };
   }
 }

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
+import { api } from '../../lib/api';
 import {
   Plane,
   Clock,
@@ -17,6 +18,8 @@ import {
   Sparkles,
   Ticket,
   AlertTriangle,
+  Mail,
+  Send,
 } from 'lucide-react';
 
 export interface BoardingPassProps {
@@ -147,6 +150,11 @@ export const BoardingPassCard: React.FC<BoardingPassProps> = ({
   const t = useTranslations('boardingPass');
   const [copied, setCopied] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [targetEmail, setTargetEmail] = useState(customerEmail || '');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   // Passenger resolution
   const pax = ticket.passenger || passengerFallback || {};
@@ -234,6 +242,29 @@ export const BoardingPassCard: React.FC<BoardingPassProps> = ({
     window.print();
   };
 
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetEmail.trim() || !targetEmail.includes('@')) {
+      setEmailError('Vui lòng nhập địa chỉ email hợp lệ');
+      return;
+    }
+    setIsSendingEmail(true);
+    setEmailError(null);
+    setEmailSuccess(null);
+    try {
+      const res = await api.sendTicketEmail(pnr, targetEmail.trim());
+      setEmailSuccess(res.message || `Đã gửi vé thành công đến ${targetEmail}!`);
+      setTimeout(() => {
+        setShowEmailModal(false);
+        setEmailSuccess(null);
+      }, 3000);
+    } catch (err: any) {
+      setEmailError(err.message || 'Không thể gửi email lúc này');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   return (
     <div className="w-full my-6 font-sans">
       {/* Action Bar (Top) */}
@@ -257,6 +288,16 @@ export const BoardingPassCard: React.FC<BoardingPassProps> = ({
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? t('copied') : t('copyInfo')}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowEmailModal(true)}
+            className="px-3.5 py-1.5 bg-primary-50 hover:bg-primary-100 dark:bg-slate-800 text-primary-900 dark:text-primary-300 rounded-xl text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border border-primary-200 dark:border-slate-700 shadow-sm"
+            title="Gửi vé máy bay điện tử và thẻ lên tàu bay qua email thật"
+          >
+            <Mail className="w-3.5 h-3.5 text-primary-600" />
+            <span>{t('sendEmail')}</span>
           </button>
 
           <button
@@ -742,6 +783,84 @@ export const BoardingPassCard: React.FC<BoardingPassProps> = ({
             >
               Đóng
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Send Email Modal */}
+      {showEmailModal && (
+        <div
+          onClick={() => setShowEmailModal(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 max-w-md w-full text-left space-y-4 shadow-2xl border border-slate-200 dark:border-slate-800"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-primary-100 dark:bg-primary-950/60 text-primary-900 dark:text-primary-300 flex items-center justify-center flex-shrink-0">
+                <Mail className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  {t('sendEmailTitle')}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {t('sendEmailDesc')}
+                </p>
+              </div>
+            </div>
+
+            {emailSuccess && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs text-emerald-800 dark:text-emerald-200 font-bold flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span>{emailSuccess}</span>
+              </div>
+            )}
+
+            {emailError && (
+              <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl text-xs text-red-700 dark:text-red-300 font-bold flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <span>{emailError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleSendEmail} className="space-y-4 pt-1">
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                  {t('recipientEmail')} <span className="text-red-500 font-bold">*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={targetEmail}
+                  onChange={(e) => setTargetEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold focus:outline-none"
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Vé sẽ được gửi định dạng HTML Thẻ lên tàu bay điện tử kèm đầy đủ mã vạch IATA.
+                </span>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowEmailModal(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSendingEmail}
+                  className="px-5 py-2 rounded-xl bg-primary-900 hover:bg-primary-800 text-white text-xs font-bold shadow-md transition flex items-center gap-1.5 cursor-pointer disabled:opacity-60"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>{isSendingEmail ? t('sending') : t('sendNow')}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

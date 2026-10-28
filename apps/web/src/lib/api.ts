@@ -98,6 +98,8 @@ export const api = {
   // Bookings
   createBooking: (body: any) => request<any>('/bookings', { method: 'POST', body: JSON.stringify(body) }),
   lookupBooking: (body: any) => request<any>('/bookings/lookup', { method: 'POST', body: JSON.stringify(body) }),
+  sendTicketEmail: (pnr: string, email?: string) =>
+    request<any>(`/bookings/${pnr}/send-ticket-email`, { method: 'POST', body: JSON.stringify({ email }) }),
   getMyBookings: () => request<any[]>('/bookings/my'),
   cancelBooking: (pnr: string, body: any) =>
     request<any>(`/bookings/${pnr}/cancel`, { method: 'POST', body: JSON.stringify(body) }),

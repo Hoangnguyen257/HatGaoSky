@@ -334,6 +334,12 @@
     "status": "状态",
     "idPassport": "身份证件 / 护照",
     "directFlight": "直飞",
-    "downloadPass": "保存登机牌"
+    "downloadPass": "保存登机牌",
+    "sendEmail": "发送至邮箱",
+    "sendEmailTitle": "发送机票与登机牌至邮箱",
+    "sendEmailDesc": "系统会将电子登机牌和预订编码 (PNR) 直接发送至您的真实电子邮箱。",
+    "recipientEmail": "收件人邮箱地址",
+    "sendNow": "立即发送",
+    "sending": "正在发送..."
   }
 }
