@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '../../../../lib/api';
 import { RoleGuard } from '../../../../components/layout/RoleGuard';
+import { ManagerPortalNav } from '../../../../components/layout/ManagerPortalNav';
 import {
   BarChart3,
   DollarSign,
@@ -81,6 +82,7 @@ export default function ManagerDashboardPage() {
   return (
     <RoleGuard allowedRoles={['STAFF_MANAGER', 'ADMIN']}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        <ManagerPortalNav />
         {/* Header & Period Filter */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>

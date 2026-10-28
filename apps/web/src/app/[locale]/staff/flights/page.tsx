@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '../../../../lib/api';
 import { RoleGuard } from '../../../../components/layout/RoleGuard';
+import { StaffNav } from '../../../../components/layout/StaffNav';
 import {
   Plane,
   PlusCircle,
@@ -112,6 +113,7 @@ export default function StaffFlightsPage() {
   return (
     <RoleGuard allowedRoles={['STAFF', 'STAFF_MANAGER', 'ADMIN']}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        <StaffNav />
         {/* Title & Add Button */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { api } from '../../../../lib/api';
 import { RoleGuard } from '../../../../components/layout/RoleGuard';
+import { ManagerPortalNav } from '../../../../components/layout/ManagerPortalNav';
 import { FileDown, FileSpreadsheet, FileText, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 
 export default function ManagerExportPage() {
@@ -52,6 +53,7 @@ export default function ManagerExportPage() {
   return (
     <RoleGuard allowedRoles={['STAFF_MANAGER', 'ADMIN']}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        <ManagerPortalNav />
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-purple-600 dark:text-purple-400">
             <FileDown className="w-4 h-4" />

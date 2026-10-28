@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../../../lib/api';
 import { useAuth } from '../../../../context/AuthContext';
 import { RoleGuard } from '../../../../components/layout/RoleGuard';
+import { AdminNav } from '../../../../components/layout/AdminNav';
 import {
   ShieldCheck,
   PlusCircle,
@@ -74,6 +75,7 @@ export default function AdminAccountsPage() {
   return (
     <RoleGuard allowedRoles={['ADMIN']}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        <AdminNav />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">

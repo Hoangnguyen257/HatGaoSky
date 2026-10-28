@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../../../../lib/api';
 import { useAuth } from '../../../../context/AuthContext';
 import { RoleGuard } from '../../../../components/layout/RoleGuard';
+import { AdminNav } from '../../../../components/layout/AdminNav';
 import {
   Users,
   Search,
@@ -97,6 +98,7 @@ export default function AdminUsersPage() {
   return (
     <RoleGuard allowedRoles={['ADMIN']}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        <AdminNav />
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-emerald-600 dark:text-emerald-400">
             <Users className="w-4 h-4" />

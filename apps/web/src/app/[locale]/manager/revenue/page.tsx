@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../../../lib/api';
 import { RoleGuard } from '../../../../components/layout/RoleGuard';
+import { ManagerPortalNav } from '../../../../components/layout/ManagerPortalNav';
 import { DollarSign, Search, Calculator, ArrowRight, Route } from 'lucide-react';
 
 export default function ManagerRevenuePage() {
@@ -29,6 +30,7 @@ export default function ManagerRevenuePage() {
   return (
     <RoleGuard allowedRoles={['STAFF_MANAGER', 'ADMIN']}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        <ManagerPortalNav />
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-purple-600 dark:text-purple-400">
             <Calculator className="w-4 h-4" />

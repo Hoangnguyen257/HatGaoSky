@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { api } from '../../../../lib/api';
 import { RoleGuard } from '../../../../components/layout/RoleGuard';
+import { StaffNav } from '../../../../components/layout/StaffNav';
 import {
   FileText,
   Search,
@@ -64,6 +65,7 @@ export default function StaffBookingRequestsPage() {
   return (
     <RoleGuard allowedRoles={['STAFF', 'STAFF_MANAGER', 'ADMIN']}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        <StaffNav />
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-primary-700 dark:text-primary-400">
             <FileText className="w-4 h-4" />

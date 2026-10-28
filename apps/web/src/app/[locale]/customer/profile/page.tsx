@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { api } from '../../../../lib/api';
 import { useAuth } from '../../../../context/AuthContext';
 import { RoleGuard } from '../../../../components/layout/RoleGuard';
+import { CustomerNav } from '../../../../components/layout/CustomerNav';
 import { User, Mail, Phone, Lock, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -56,6 +57,7 @@ export default function ProfilePage() {
   return (
     <RoleGuard allowedRoles={['CUSTOMER', 'STAFF', 'STAFF_MANAGER', 'ADMIN']}>
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+        <CustomerNav />
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
             {t('nav.profile')}

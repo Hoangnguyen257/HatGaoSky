@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { api } from '../../../../lib/api';
 import { RoleGuard } from '../../../../components/layout/RoleGuard';
+import { CustomerNav } from '../../../../components/layout/CustomerNav';
 import { Plane, Calendar, ArrowRight, ShieldCheck, Clock } from 'lucide-react';
 
 export default function CustomerBookingsPage() {
@@ -27,6 +28,7 @@ export default function CustomerBookingsPage() {
   return (
     <RoleGuard allowedRoles={['CUSTOMER', 'STAFF', 'STAFF_MANAGER', 'ADMIN']}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
+        <CustomerNav />
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
             Chuyến bay của tôi (My Bookings)
