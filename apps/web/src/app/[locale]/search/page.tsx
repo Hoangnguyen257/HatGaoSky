@@ -265,9 +265,23 @@ export default function SearchResultsPage() {
               ))}
             </div>
           ) : error ? (
-            <div className="bg-red-50 dark:bg-red-950/40 rounded-3xl p-8 border border-red-200 dark:border-red-800 text-center">
-              <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
-              <h3 className="text-base font-bold text-red-800 dark:text-red-200">{error}</h3>
+            <div className="bg-red-50 dark:bg-red-950/40 rounded-3xl p-8 border border-red-200 dark:border-red-800 text-center space-y-3">
+              <AlertCircle className="w-8 h-8 text-red-600 mx-auto" />
+              <h3 className="text-base font-bold text-red-800 dark:text-red-200">
+                {error === 'Failed to fetch'
+                  ? 'Không thể kết nối đến máy chủ API (Máy chủ backend đang khởi động)'
+                  : error}
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400">
+                Hệ thống đang kết nối lại với máy chủ chuyến bay. Quý khách vui lòng nhấn nút bên dưới để thử lại.
+              </p>
+              <button
+                type="button"
+                onClick={fetchResults}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-900 hover:bg-primary-800 text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer"
+              >
+                <span>Thử lại ngay</span>
+              </button>
             </div>
           ) : searchResult?.outboundFlights?.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 border border-slate-100 dark:border-slate-800 text-center shadow-sm space-y-4">
