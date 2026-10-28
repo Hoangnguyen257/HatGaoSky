@@ -1,0 +1,21 @@
+{
+  "name": "vietsky-airlines",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Official Airline Ticket Booking Website - VietSky Airlines",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"API,WEB\" -c \"bgBlue.bold,bgGreen.bold\" \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm run start:dev --workspace=apps/api",
+    "dev:web": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",
+    "seed": "npm run prisma:seed --workspace=apps/api",
+    "test:api": "npm run test --workspace=apps/api",
+    "test:e2e": "node test-e2e.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

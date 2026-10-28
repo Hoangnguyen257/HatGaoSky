@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "target": "ES2022"
+  },
+  "references": [
+    { "path": "./apps/api" },
+    { "path": "./apps/web" }
+  ],
+  "files": []
+}

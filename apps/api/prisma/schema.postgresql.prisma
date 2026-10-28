@@ -1,0 +1,407 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. User & Authentication
+model User {
+  id                 String          @id @default(uuid())
+  email              String          @unique
+  passwordHash       String
+  role               String          @default("CUSTOMER") // GUEST, CUSTOMER, STAFF, STAFF_MANAGER, ADMIN
+  fullName           String
+  phone              String?
+  address            String?
+  status             String          @default("ACTIVE") // INACTIVE, ACTIVE, DISABLED, DELETED
+  mfaSecret          String?
+  mfaEnabled         Boolean         @default(false)
+  verificationToken  String?
+  resetToken         String?
+  resetTokenExpiry   DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  deletedAt          DateTime?
+
+  customerProfile    Customer?
+  loyaltyAccount     LoyaltyAccount?
+  bookings           Booking[]
+  auditLogs          AuditLog[]
+  staffLogs          BookingRequestLog[]
+  exportJobs         ExportJob[]
+}
+
+// 2. Customer / Member profile
+model Customer {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  memberCode     String    @unique
+  dateOfBirth    DateTime?
+  passportNumber String?
+  nationality    String?   @default("VNM")
+  gender         String?   // MALE, FEMALE, OTHER
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// 3. Loyalty Account & Miles
+model LoyaltyAccount {
+  id               String            @id @default(uuid())
+  userId           String            @unique
+  tier             String            @default("STANDARD") // STANDARD, SILVER, GOLD, PLATINUM
+  totalMilesEarned Int               @default(0)
+  availableMiles   Int               @default(0)
+  tierExpiryDate   DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions     MileTransaction[]
+}
+
+// 4. Rewards Catalog
+model Reward {
+  id            String   @id @default(uuid())
+  title         String
+  description   String
+  category      String   // BAGGAGE_VOUCHER, LOUNGE_ACCESS, TICKET_DISCOUNT, MEAL_UPGRADE
+  milesRequired Int
+  stock         Int      @default(999)
+  imageUrl      String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// 5. Mile Transactions
+model MileTransaction {
+  id               String         @id @default(uuid())
+  loyaltyAccountId String
+  type             String         // EARN, REDEEM, PURCHASE, EXPIRE, UPGRADE
+  amount           Int
+  balanceAfter     Int
+  description      String
+  referenceId      String?
+  createdAt        DateTime       @default(now())
+
+  loyaltyAccount   LoyaltyAccount @relation(fields: [loyaltyAccountId], references: [id], onDelete: Cascade)
+}
+
+// 6. Aircraft
+model Aircraft {
+  id                 String    @id @default(uuid())
+  model              String    // Boeing 787-9 Dreamliner, Airbus A350-900, Airbus A321neo
+  registrationNumber String    @unique
+  totalCapacity      Int
+  economySeats       Int
+  businessSeats      Int
+  firstSeats         Int
+  isActive           Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  flights            Flight[]
+  seats              Seat[]
+}
+
+// 7. Airport
+model Airport {
+  id          String   @id @default(uuid())
+  code        String   @unique // SGN, HAN, DAD, CXR, PQC, BKK, SIN, ICN, NRT
+  name        String
+  city        String
+  country     String
+  timezone    String   @default("Asia/Ho_Chi_Minh")
+  terminal    String?
+  createdAt   DateTime @default(now())
+
+  departures  Flight[] @relation("DepartureAirport")
+  arrivals    Flight[] @relation("ArrivalAirport")
+}
+
+// 8. Flight
+model Flight {
+  id                   String        @id @default(uuid())
+  flightNumber         String        // e.g. VSK-102, VSK-205
+  aircraftId           String
+  originAirportId      String
+  destinationAirportId String
+  departureTime        DateTime
+  arrivalTime          DateTime
+  durationMinutes      Int
+  status               String        @default("SCHEDULED") // SCHEDULED, DELAYED, CANCELLED, COMPLETED
+  isDisabled           Boolean       @default(false)
+  disableReason        String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  aircraft             Aircraft      @relation(fields: [aircraftId], references: [id])
+  originAirport        Airport       @relation("DepartureAirport", fields: [originAirportId], references: [id])
+  destinationAirport   Airport       @relation("ArrivalAirport", fields: [destinationAirportId], references: [id])
+  fares                FlightFare[]
+  seats                Seat[]
+  tickets              Ticket[]
+
+  @@index([flightNumber])
+  @@index([departureTime])
+}
+
+// 9. Flight Fare (per cabin class)
+model FlightFare {
+  id                 String   @id @default(uuid())
+  flightId           String
+  cabinClass         String   // ECONOMY, BUSINESS, FIRST
+  basePrice          Float
+  baggageAllowanceKg Int      @default(20)
+  cabinBaggageKg     Int      @default(7)
+  refundFee          Float    @default(300000)
+  changeFee          Float    @default(200000)
+  availableSeats     Int
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  flight             Flight   @relation(fields: [flightId], references: [id], onDelete: Cascade)
+
+  @@unique([flightId, cabinClass])
+}
+
+// 10. Seat
+model Seat {
+  id                String    @id @default(uuid())
+  aircraftId        String
+  flightId          String
+  seatNumber        String    // e.g. 1A, 2B, 15C
+  cabinClass        String    // ECONOMY, BUSINESS, FIRST
+  row               Int
+  col               String
+  status            String    @default("AVAILABLE") // AVAILABLE, HELD, BOOKED
+  heldUntil         DateTime?
+  heldBySessionId   String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  aircraft          Aircraft  @relation(fields: [aircraftId], references: [id])
+  flight            Flight    @relation(fields: [flightId], references: [id], onDelete: Cascade)
+  tickets           Ticket[]
+
+  @@unique([flightId, seatNumber])
+  @@index([status, heldUntil])
+}
+
+// 11. Booking
+model Booking {
+  id             String              @id @default(uuid())
+  pnr            String              @unique
+  userId         String?
+  customerEmail  String
+  customerPhone  String
+  customerName   String
+  status         String              @default("NEW") // NEW, PENDING_PAYMENT, PARTIALLY_PAID, CONFIRMED, COMPLETED, CANCELLED, REFUND_PROCESSING, EXPIRED
+  bookingType    String              @default("INDIVIDUAL") // INDIVIDUAL, GROUP
+  totalAmount    Float               @default(0)
+  paidAmount     Float               @default(0)
+  balanceDue     Float               @default(0)
+  holdDeadline   DateTime?
+  cancelReason   String?
+  discountCode   String?
+  discountAmount Float               @default(0)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  user           User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  passengers     Passenger[]
+  tickets        Ticket[]
+  services       BookingService[]
+  payments       Payment[]
+  refunds        Refund[]
+  requestLogs    BookingRequestLog[]
+
+  @@index([pnr])
+  @@index([customerEmail])
+}
+
+// 12. Passenger
+model Passenger {
+  id                   String           @id @default(uuid())
+  bookingId            String
+  firstName            String
+  lastName             String
+  passengerType        String           // ADULT, CHILD, INFANT
+  dateOfBirth          DateTime
+  passportNumber       String?
+  nationality          String?          @default("VNM")
+  accompanyingAdultId  String?
+  createdAt            DateTime         @default(now())
+
+  booking              Booking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  tickets              Ticket[]
+  services             BookingService[]
+}
+
+// 13. Ticket
+model Ticket {
+  id           String    @id @default(uuid())
+  bookingId    String
+  passengerId  String
+  flightId     String
+  seatId       String
+  cabinClass   String    // ECONOMY, BUSINESS, FIRST
+  ticketNumber String    @unique
+  status       String    @default("ISSUED") // ISSUED, CHECKED_IN, BOARDED, EXPIRED
+  price        Float
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  booking      Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  passenger    Passenger @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+  flight       Flight    @relation(fields: [flightId], references: [id])
+  seat         Seat      @relation(fields: [seatId], references: [id])
+}
+
+// 14. Booking Additional Services
+model BookingService {
+  id          String     @id @default(uuid())
+  bookingId   String
+  passengerId String?
+  serviceType String     // BAGGAGE, MEAL, PET, PRIORITY_BOARDING, UPGRADE, INSURANCE
+  serviceName String
+  quantity    Int        @default(1)
+  unitPrice   Float
+  totalPrice  Float
+  detailsJson String?
+  status      String     @default("SELECTING") // SELECTING, PAYMENT_PROCESSING, CONFIRMED, CANCELED
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  booking     Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  passenger   Passenger? @relation(fields: [passengerId], references: [id], onDelete: Cascade)
+}
+
+// 15. Payment
+model Payment {
+  id              String    @id @default(uuid())
+  bookingId       String
+  transactionCode String    @unique
+  method          String    // CREDIT_CARD, EWALLET, BANK_TRANSFER
+  amount          Float
+  status          String    @default("PENDING") // PENDING, SUCCESS, FAILED, PARTIALLY_PAID, REFUNDED
+  gatewayRef      String?
+  idempKey        String?   @unique
+  paidAt          DateTime?
+  cardLastFour    String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  booking         Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  refunds         Refund[]
+}
+
+// 16. Refund
+model Refund {
+  id          String    @id @default(uuid())
+  bookingId   String
+  paymentId   String?
+  amount      Float
+  penaltyFee  Float     @default(0)
+  reason      String
+  status      String    @default("PENDING") // PENDING, COMPLETED, FAILED
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  booking     Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  payment     Payment?  @relation(fields: [paymentId], references: [id])
+}
+
+// 17. Discount / Promo Code
+model Discount {
+  id                String    @id @default(uuid())
+  code              String    @unique
+  description       String
+  discountType      String    // PERCENTAGE, FIXED
+  value             Float
+  minBookingAmount  Float     @default(0)
+  maxDiscountAmount Float?
+  startDate         DateTime
+  endDate           DateTime
+  routeCondition    String?
+  cabinCondition    String?
+  tierCondition     String?
+  usageLimit        Int       @default(100)
+  usedCount         Int       @default(0)
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// 18. Booking Request Log
+model BookingRequestLog {
+  id             String   @id @default(uuid())
+  bookingId      String
+  staffId        String
+  action         String
+  previousStatus String?
+  newStatus      String?
+  reason         String?
+  createdAt      DateTime @default(now())
+
+  booking        Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  staff          User     @relation(fields: [staffId], references: [id])
+}
+
+// 19. Audit Log
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String?
+  actorRole   String?
+  action      String
+  entityName  String
+  entityId    String?
+  detailsJson String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+}
+
+// 20. System Setting
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+// 21. Sent Email
+model SentEmail {
+  id             String   @id @default(uuid())
+  recipientEmail String
+  subject        String
+  template       String
+  contentHtml    String
+  status         String   @default("SENT")
+  sentAt         DateTime @default(now())
+}
+
+// 22. Export Job
+model ExportJob {
+  id             String    @id @default(uuid())
+  requestedById  String
+  reportType     String
+  format         String
+  status         String    @default("IDLE")
+  dateRangeStart DateTime?
+  dateRangeEnd   DateTime?
+  fileUrl        String?
+  errorMessage   String?
+  createdAt      DateTime  @default(now())
+  completedAt    DateTime?
+
+  requestedBy    User      @relation(fields: [requestedById], references: [id])
+}
