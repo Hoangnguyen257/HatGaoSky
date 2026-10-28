@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { api } from '../../../../lib/api';
 import { useAuth } from '../../../../context/AuthContext';
-import { RoleGuard } from '../../../../components/layout/RoleGuard';
 import { CustomerNav } from '../../../../components/layout/CustomerNav';
 import {
   Sparkles,
@@ -14,6 +13,7 @@ import {
   PlusCircle,
   Clock,
   ArrowUpRight,
+  ArrowRight,
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
@@ -21,12 +21,19 @@ import {
   Copy,
   Check,
   X,
+  Crown,
+  Plane,
+  Luggage,
+  Coffee,
+  Star,
+  Zap,
 } from 'lucide-react';
 
 export default function LoyaltyPage() {
   const t = useTranslations();
   const locale = useLocale();
-  const { user, refreshProfile } = useAuth();
+  const { user, role, refreshProfile, openLoginModal, openRegisterModal } = useAuth();
+  const isGuest = !user || role === 'GUEST';
 
   const [account, setAccount] = useState<any | null>(null);
   const [rewards, setRewards] = useState<any[]>([]);
@@ -54,12 +61,17 @@ export default function LoyaltyPage() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [accData, rewardsData] = await Promise.all([
-        api.getMyLoyalty(),
-        api.getRewards(),
-      ]);
-      setAccount(accData);
-      setRewards(rewardsData);
+      if (isGuest) {
+        const rewardsData = await api.getRewards();
+        setRewards(rewardsData);
+      } else {
+        const [accData, rewardsData] = await Promise.all([
+          api.getMyLoyalty(),
+          api.getRewards(),
+        ]);
+        setAccount(accData);
+        setRewards(rewardsData);
+      }
       setLoading(false);
     } catch {
       setLoading(false);
@@ -68,7 +80,7 @@ export default function LoyaltyPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user, role, isGuest]);
 
   const handleConfirmRedeem = async () => {
     if (!selectedReward) return;
@@ -129,10 +141,294 @@ export default function LoyaltyPage() {
     }
   };
 
+  if (isGuest) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+        {/* HERO SECTION */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-950 via-primary-900 to-slate-900 p-8 sm:p-12 text-white shadow-2xl border border-gold-500/30">
+          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 bg-gold-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/3 -mb-16 w-80 h-80 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 max-w-2xl space-y-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gold-500/15 border border-gold-500/30 text-gold-400 text-xs font-bold tracking-wide">
+              <Sparkles className="w-4 h-4 text-gold-400" />
+              <span>Hạt Gạo Sky Lotus Club · Frequent Flyer Program</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+              Đăng ký Hội viên Lotus Club để nhận <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-300 via-gold-400 to-amber-300">vô vàn ưu đãi đặc quyền</span>
+            </h1>
+
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+              Mỗi hành trình cùng Hạt Gạo Sky là một cơ hội nâng tầm trải nghiệm. Tích lũy dặm bay không giới hạn, tận hưởng dịch vụ ưu tiên tại mọi sân bay và quy đổi hàng ngàn voucher, phần quà giá trị.
+            </p>
+
+            {/* Quick Guarantees */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs">
+              <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/10">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <span>Đăng ký miễn phí 30s</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/10">
+                <Gift className="w-4 h-4 text-gold-400 flex-shrink-0" />
+                <span>Tặng 1.000 dặm chào mừng</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/5 backdrop-blur-sm px-3 py-2 rounded-xl border border-white/10">
+                <Plane className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                <span>Tích dặm mọi chuyến bay</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap items-center gap-4 pt-4">
+              <button
+                type="button"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  openRegisterModal({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+                }}
+                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-gold-400 via-gold-500 to-amber-500 hover:from-gold-500 hover:to-amber-600 text-slate-950 font-black text-sm shadow-xl shadow-gold-500/25 flex items-center gap-2 transition cursor-pointer transform hover:-translate-y-0.5"
+              >
+                <Sparkles className="w-5 h-5 text-slate-950" />
+                <span>Đăng ký tại đây</span>
+                <ArrowRight className="w-4 h-4 text-slate-950 ml-1" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => openLoginModal()}
+                className="px-6 py-3.5 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-bold text-sm border border-white/20 backdrop-blur-sm transition cursor-pointer"
+              >
+                Đã có tài khoản? Đăng nhập ngay
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 4 CORE PRIVILEGES */}
+        <div className="space-y-6">
+          <div className="text-center max-w-xl mx-auto space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+              Đặc quyền Vàng dành riêng cho Hội viên
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500">
+              Khám phá những tiện ích vượt trội được thiết kế để từng chuyến bay của bạn trở nên trọn vẹn
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center font-bold">
+                <Star className="w-6 h-6" />
+              </div>
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                Tích dặm bay không giới hạn
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Nhận dặm thưởng trên mỗi dặm bay thực tế cùng Hạt Gạo Sky và khi chi tiêu tại hệ thống đối tác khách sạn, du lịch.
+              </p>
+            </div>
+
+            <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center font-bold">
+                <Coffee className="w-6 h-6" />
+              </div>
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                Phòng chờ Lotus Lounge
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Tận hưởng không gian nghỉ dưỡng tĩnh lặng, ẩm thực Á - Âu cao cấp và quầy bar sang trọng tại Nội Bài, Tân Sơn Nhất, Đà Nẵng.
+              </p>
+            </div>
+
+            <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center font-bold">
+                <Zap className="w-6 h-6" />
+              </div>
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                Ưu tiên SkyPriority
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Check-in quầy riêng, lối đi an ninh ưu tiên và quyền lên máy bay trước mà không phải xếp hàng chờ đợi.
+              </p>
+            </div>
+
+            <div className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition space-y-3">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center font-bold">
+                <Luggage className="w-6 h-6" />
+              </div>
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                Hành lý miễn cước thêm
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Thoải mái du lịch với từ 10kg đến 20kg hành lý ký gửi miễn phí kèm thẻ hành lý gắn cờ ưu tiên nhận hành lý sớm nhất.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* TIERS SHOWCASE */}
+        <div className="space-y-6">
+          <div className="text-center max-w-xl mx-auto space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+              Hệ thống 4 Hạng thẻ Hội viên
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500">
+              Càng bay nhiều, đẳng cấp càng thăng hoa với quyền lợi lũy tiến
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Silver Tier */}
+            <div className="rounded-3xl p-6 bg-gradient-to-b from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-850 border border-slate-300 dark:border-slate-700 space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black uppercase text-slate-600 dark:text-slate-300 tracking-wider">Hội viên Bạc</span>
+                <Award className="w-5 h-5 text-slate-400" />
+              </div>
+              <h4 className="text-xl font-black text-slate-900 dark:text-white">Silver</h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Từ 0 đến 4.999 dặm</p>
+              <ul className="text-xs space-y-2 text-slate-700 dark:text-slate-300 pt-2 border-t border-slate-300/60 dark:border-slate-700">
+                <li className="flex items-center gap-1.5">✓ Tích dặm bay tiêu chuẩn</li>
+                <li className="flex items-center gap-1.5">✓ Ưu đãi nhân dịp sinh nhật</li>
+                <li className="flex items-center gap-1.5">✓ Ưu tiên chọn chỗ ngồi tiêu chuẩn</li>
+              </ul>
+            </div>
+
+            {/* Titanium Tier */}
+            <div className="rounded-3xl p-6 bg-gradient-to-b from-blue-50 to-slate-100 dark:from-blue-950/30 dark:to-slate-850 border border-blue-200 dark:border-blue-900/40 space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black uppercase text-blue-700 dark:text-blue-400 tracking-wider">Hội viên Titan</span>
+                <Award className="w-5 h-5 text-blue-600" />
+              </div>
+              <h4 className="text-xl font-black text-slate-900 dark:text-white">Titanium</h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Từ 5.000 dặm</p>
+              <ul className="text-xs space-y-2 text-slate-700 dark:text-slate-300 pt-2 border-t border-blue-200/60 dark:border-slate-700">
+                <li className="flex items-center gap-1.5">✓ Cộng thêm 15% dặm thưởng</li>
+                <li className="flex items-center gap-1.5">✓ Ưu tiên chọn chỗ ngồi phía trước</li>
+                <li className="flex items-center gap-1.5">✓ Ưu tiên xử lý danh sách chờ</li>
+              </ul>
+            </div>
+
+            {/* Gold Tier */}
+            <div className="rounded-3xl p-6 bg-gradient-to-b from-amber-50 to-amber-100/50 dark:from-amber-950/30 dark:to-slate-850 border border-gold-300 dark:border-gold-700/50 space-y-4 shadow-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black uppercase text-amber-700 dark:text-gold-400 tracking-wider">Hội viên Vàng</span>
+                <Crown className="w-5 h-5 text-gold-500" />
+              </div>
+              <h4 className="text-xl font-black text-slate-900 dark:text-white">Gold</h4>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Từ 15.000 dặm</p>
+              <ul className="text-xs space-y-2 text-slate-700 dark:text-slate-300 pt-2 border-t border-amber-200 dark:border-slate-700">
+                <li className="flex items-center gap-1.5 font-semibold text-gold-700 dark:text-gold-400">★ Quầy check-in SkyPriority</li>
+                <li className="flex items-center gap-1.5 font-semibold text-gold-700 dark:text-gold-400">★ Tặng thêm 10kg hành lý miễn phí</li>
+                <li className="flex items-center gap-1.5">✓ Cộng thêm 30% dặm thưởng</li>
+              </ul>
+            </div>
+
+            {/* Platinum Tier */}
+            <div className="rounded-3xl p-6 bg-gradient-to-br from-primary-950 to-slate-900 text-white border-2 border-gold-400 shadow-xl space-y-4 relative overflow-hidden">
+              <div className="absolute top-0 right-0 px-3 py-1 bg-gold-500 text-slate-950 text-[10px] font-black rounded-bl-xl uppercase tracking-wider">
+                Đỉnh cao
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-black uppercase text-gold-400 tracking-wider">Bạch Kim</span>
+                <Crown className="w-5 h-5 text-gold-400" />
+              </div>
+              <h4 className="text-xl font-black text-white">Platinum</h4>
+              <p className="text-xs text-slate-400">Từ 30.000 dặm</p>
+              <ul className="text-xs space-y-2 text-slate-200 pt-2 border-t border-white/10">
+                <li className="flex items-center gap-1.5 font-bold text-gold-300">★ Phòng chờ Thương gia Lotus Lounge</li>
+                <li className="flex items-center gap-1.5 font-bold text-gold-300">★ Lối đi an ninh & lên tàu bay ưu tiên</li>
+                <li className="flex items-center gap-1.5 font-bold text-gold-300">★ Thêm 20kg hành lý + Nâng hạng ghế</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* REWARDS CATALOG PREVIEW */}
+        <div className="space-y-6">
+          <div className="text-center max-w-xl mx-auto space-y-2">
+            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+              Danh mục Quà tặng & Đặc quyền Đổi thưởng
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500">
+              Dùng dặm tích lũy để quy đổi ngay các dịch vụ bay cao cấp mà không tốn chi phí
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {rewards.map((r) => (
+              <div
+                key={r.id}
+                className="p-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col justify-between space-y-4"
+              >
+                <div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-primary-50 text-primary-800 dark:bg-primary-950/50 dark:text-primary-300 uppercase tracking-wider">
+                    {r.category}
+                  </span>
+                  <h4 className="text-base font-extrabold text-slate-900 dark:text-white mt-2">
+                    {r.title}
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    {r.description}
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <span className="text-base font-black text-gold-600 dark:text-gold-400">
+                      {r.milesRequired.toLocaleString()}
+                    </span>
+                    <span className="text-xs text-slate-400 ml-1">dặm</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      openRegisterModal({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+                    }}
+                    className="px-4 py-2 rounded-xl bg-gold-500 hover:bg-gold-600 text-slate-950 font-bold text-xs shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>Đăng ký để đổi quà</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* BOTTOM CALL TO ACTION */}
+        <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-r from-primary-900 via-primary-800 to-primary-950 text-white text-center space-y-4 border border-gold-500/20 shadow-xl">
+          <Sparkles className="w-8 h-8 text-gold-400 mx-auto" />
+          <h3 className="text-2xl sm:text-3xl font-black">
+            Sẵn sàng nâng tầm hành trình cùng Hạt Gạo Sky?
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto leading-relaxed">
+            Đăng ký Hội viên hoàn toàn miễn phí ngay hôm nay. Chỉ mất 30 giây để bắt đầu tích lũy dặm thưởng cho chuyến bay kế tiếp của bạn!
+          </p>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                openRegisterModal({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+              }}
+              className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-gold-400 to-amber-500 hover:from-gold-500 hover:to-amber-600 text-slate-950 font-black text-sm shadow-xl shadow-gold-500/30 inline-flex items-center gap-2 transition cursor-pointer transform hover:-translate-y-0.5"
+            >
+              <Sparkles className="w-5 h-5 text-slate-950" />
+              <span>Đăng ký tại đây</span>
+              <ArrowRight className="w-4 h-4 text-slate-950" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <RoleGuard allowedRoles={['CUSTOMER', 'STAFF', 'STAFF_MANAGER', 'ADMIN']}>
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-        <CustomerNav />
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+      <CustomerNav />
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -560,6 +856,5 @@ export default function LoyaltyPage() {
           </div>
         )}
       </div>
-    </RoleGuard>
   );
 }

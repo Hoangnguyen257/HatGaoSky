@@ -110,13 +110,6 @@ export default function SearchResultsPage() {
     }
 
     const bookingTarget = `/${locale}/booking?${q.toString()}`;
-
-    // Yêu cầu đăng nhập trước khi tiến hành đặt vé
-    if (!user) {
-      router.push(`/${locale}/auth/login?redirect=${encodeURIComponent(bookingTarget)}`);
-      return;
-    }
-
     router.push(bookingTarget);
   };
 

@@ -36,15 +36,7 @@ export default function BookingWizardPage() {
   const returnFlightId = searchParams.get('returnFlightId') || '';
   const initialCabinClass = searchParams.get('cabinClass') || 'ECONOMY';
   const paxCount = Number(searchParams.get('passengers') || '1');
-  const { user } = useAuth();
-
-  // Redirect to login if user is not authenticated
-  useEffect(() => {
-    if (!user && typeof window !== 'undefined') {
-      const fullPath = window.location.pathname + window.location.search;
-      router.push(`/${locale}/auth/login?redirect=${encodeURIComponent(fullPath)}`);
-    }
-  }, [user, router, locale]);
+  const { user, openLoginModal, openRegisterModal } = useAuth();
 
   const [step, setStep] = useState<number>(1);
   const [sessionId] = useState(() => `sess-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`);
@@ -56,19 +48,27 @@ export default function BookingWizardPage() {
   // Form State: Passengers
   const [passengers, setPassengers] = useState<any[]>(() =>
     Array.from({ length: paxCount }, (_, i) => ({
-      firstName: i === 0 ? 'An' : `Khach ${i + 1}`,
-      lastName: i === 0 ? 'Nguyen Van' : 'Tran',
+      firstName: '',
+      lastName: '',
       passengerType: 'ADULT',
       dateOfBirth: '1995-05-15',
-      passportNumber: 'C8912345',
+      passportNumber: '',
       nationality: 'VNM',
     })),
   );
 
   // Contact Info
-  const [contactName, setContactName] = useState('Nguyen Van An');
-  const [contactEmail, setContactEmail] = useState('customer@vietsky.vn');
-  const [contactPhone, setContactPhone] = useState('0988889999');
+  const [contactName, setContactName] = useState(user?.fullName || '');
+  const [contactEmail, setContactEmail] = useState(user?.email || '');
+  const [contactPhone, setContactPhone] = useState(user?.phone || '');
+
+  useEffect(() => {
+    if (user) {
+      if (!contactName && user.fullName) setContactName(user.fullName);
+      if (!contactEmail && user.email) setContactEmail(user.email);
+      if (!contactPhone && user.phone) setContactPhone(user.phone);
+    }
+  }, [user]);
 
   // Pet Declaration (optional)
   const [includePet, setIncludePet] = useState(false);
@@ -391,6 +391,43 @@ export default function BookingWizardPage() {
                   Vui lòng nhập chính xác họ tên và thông tin như trên giấy tờ tùy thân.
                 </p>
               </div>
+
+              {!user && (
+                <div className="p-4 bg-gradient-to-r from-amber-50 to-blue-50 dark:from-slate-800 dark:to-slate-800/80 rounded-2xl border border-amber-200 dark:border-amber-800/50 flex flex-wrap items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-gold-500 text-slate-950 flex items-center justify-center font-bold flex-shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-white">
+                        Quý khách đang đặt vé với tư cách Khách vãng lai (Guest)
+                      </p>
+                      <p className="text-slate-500 dark:text-slate-400">
+                        Đăng nhập hoặc Đăng ký Hội viên Lotus Club để tự động lưu vé và tích dặm thưởng cho chuyến bay này.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => openLoginModal()}
+                      className="px-3 py-1.5 bg-white dark:bg-slate-700 hover:bg-slate-100 text-primary-900 dark:text-white font-bold rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm transition cursor-pointer"
+                    >
+                      Đăng nhập
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        openRegisterModal({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+                      }}
+                      className="px-3 py-1.5 bg-gold-500 hover:bg-gold-600 text-slate-950 font-bold rounded-xl shadow-sm transition cursor-pointer"
+                    >
+                      Đăng ký Hội viên
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Passenger cards */}
               {passengers.map((p, idx) => (

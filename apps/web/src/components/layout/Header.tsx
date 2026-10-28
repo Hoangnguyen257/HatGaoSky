@@ -118,19 +118,17 @@ export const Header: React.FC = () => {
               {t('nav.manageBooking')}
             </Link>
 
-            {user && role !== 'GUEST' && (
-              <Link
-                href={getLocalizedPath('/customer/loyalty')}
-                className={`px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1.5 ${
-                  pathname.includes('/loyalty')
-                    ? 'text-primary-700 dark:text-primary-400 bg-primary-50 dark:bg-slate-800'
-                    : 'text-slate-700 dark:text-slate-200 hover:text-primary-700 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <Sparkles className="w-4 h-4 text-gold-500" />
-                {t('nav.loyalty')}
-              </Link>
-            )}
+            <Link
+              href={getLocalizedPath('/customer/loyalty')}
+              className={`px-3 py-2 rounded-lg text-sm font-semibold transition flex items-center gap-1.5 ${
+                pathname.includes('/loyalty')
+                  ? 'text-primary-700 dark:text-primary-400 bg-primary-50 dark:bg-slate-800'
+                  : 'text-slate-700 dark:text-slate-200 hover:text-primary-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Sparkles className="w-4 h-4 text-gold-500" />
+              {t('nav.loyalty')}
+            </Link>
 
             {/* Role-Specific Portal Links */}
             {(role === 'STAFF' || role === 'STAFF_MANAGER' || role === 'ADMIN') && (
@@ -345,15 +343,13 @@ export const Header: React.FC = () => {
           >
             {t('nav.manageBooking')}
           </Link>
-          {user && role !== 'GUEST' && (
-            <Link
-              href={getLocalizedPath('/customer/loyalty')}
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-lg text-base font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-            >
-              {t('nav.loyalty')}
-            </Link>
-          )}
+          <Link
+            href={getLocalizedPath('/customer/loyalty')}
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            {t('nav.loyalty')}
+          </Link>
           {(role === 'STAFF' || role === 'STAFF_MANAGER' || role === 'ADMIN') && (
             <Link
               href={getLocalizedPath('/staff/flights')}
