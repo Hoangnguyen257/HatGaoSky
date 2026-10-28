@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -25,6 +25,7 @@ export const LoginModal: React.FC = () => {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { isLoginModalOpen, closeLoginModal, openRegisterModal, login, verifyMfa } = useAuth();
 
   const [email, setEmail] = useState('customer@vietsky.vn');
@@ -104,6 +105,12 @@ export const LoginModal: React.FC = () => {
       }
       closeLoginModal();
 
+      const redirectTarget = searchParams.get('redirect');
+      if (redirectTarget) {
+        router.push(redirectTarget);
+        return;
+      }
+
       // If user logged in while on an auth page, redirect appropriately
       if (pathname.includes('/auth/')) {
         const targetRole = res?.user?.role;
@@ -132,6 +139,12 @@ export const LoginModal: React.FC = () => {
       const res = await verifyMfa(mfaSessionToken, otpCode);
       setMfaRequired(false);
       closeLoginModal();
+
+      const redirectTarget = searchParams.get('redirect');
+      if (redirectTarget) {
+        router.push(redirectTarget);
+        return;
+      }
 
       // If user logged in while on an auth page, redirect appropriately
       if (pathname.includes('/auth/')) {

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
+import { useAuth } from '../../context/AuthContext';
 import { SearchWidget } from '../../components/public/SearchWidget';
 import {
   Sparkles,
@@ -19,6 +20,7 @@ import {
 export default function HomePage() {
   const t = useTranslations();
   const locale = useLocale();
+  const { openRegisterModal } = useAuth();
 
   const promoCards = [
     {
@@ -289,12 +291,19 @@ export default function HomePage() {
               Nhận ngay 1.000 dặm thưởng chào mừng khi đăng ký tài khoản. Đổi vé máy bay miễn phí, vào phòng chờ Lotus Lounge hạng sang và nâng hạng ghế dễ dàng.
             </p>
             <div className="pt-2 flex flex-wrap gap-4">
-              <Link
-                href={`/${locale}/auth/register`}
-                className="px-6 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-slate-900 font-bold text-sm shadow-md transition"
+              <button
+                type="button"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  openRegisterModal({
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2,
+                  });
+                }}
+                className="px-6 py-3 rounded-xl bg-gold-500 hover:bg-gold-600 text-slate-900 font-bold text-sm shadow-md transition cursor-pointer"
               >
                 Đăng ký Hội viên miễn phí
-              </Link>
+              </button>
               <Link
                 href={`/${locale}/customer/loyalty`}
                 className="px-6 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-sm border border-white/20 transition"

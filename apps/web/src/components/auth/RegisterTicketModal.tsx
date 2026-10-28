@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../lib/api';
@@ -31,6 +31,8 @@ export const RegisterTicketModal: React.FC = () => {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { isRegisterModalOpen, closeRegisterModal, openLoginModal, registerModalOrigin } = useAuth();
 
   const [mounted, setMounted] = useState(false);
@@ -163,6 +165,9 @@ export const RegisterTicketModal: React.FC = () => {
         password,
       });
       setSuccessResult(res);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('hatgaosky_registered_email', email);
+      }
       setLoading(false);
     } catch (err: any) {
       setError(err.message || 'Đăng ký không thành công');
@@ -457,13 +462,26 @@ export const RegisterTicketModal: React.FC = () => {
                   Chúc mừng Quý khách gia nhập Hạt Gạo Sky!
                 </h3>
                 <p className="text-xs text-emerald-700 dark:text-emerald-300">
-                  Tài khoản Hội viên Lotus Club của Quý khách đã được kích hoạt thành công.
+                  Mã hội viên của Quý khách: <strong>{successResult.memberCode}</strong>.
                 </p>
+                {successResult.verificationToken && (
+                  <div className="pt-1">
+                    <Link
+                      href={`/${locale}/auth/verify-email?token=${successResult.verificationToken}`}
+                      onClick={() => closeRegisterModal()}
+                      className="inline-block px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition"
+                    >
+                      Kích hoạt tài khoản ngay
+                    </Link>
+                  </div>
+                )}
                 <button
                   type="button"
                   onClick={() => {
                     closeRegisterModal();
-                    openLoginModal();
+                    if (!pathname.includes('/auth/login')) {
+                      openLoginModal();
+                    }
                   }}
                   className="mt-3 px-6 py-2.5 bg-primary-900 text-white font-bold text-xs rounded-xl shadow-md hover:bg-primary-800 transition inline-flex items-center gap-2 cursor-pointer"
                 >

@@ -14,7 +14,15 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect');
-  const { user, login, verifyMfa } = useAuth();
+  const registerParam = searchParams.get('register');
+  const { user, login, verifyMfa, openRegisterModal } = useAuth();
+
+  // If redirected with ?register=true, automatically launch 3D ticket register animation
+  useEffect(() => {
+    if (registerParam === 'true') {
+      openRegisterModal();
+    }
+  }, [registerParam, openRegisterModal]);
 
   // If already logged in, redirect to intended page or role portal
   useEffect(() => {
@@ -35,6 +43,17 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('customer@vietsky.vn');
   const [password, setPassword] = useState('Customer@123456');
+
+  // Pre-fill email if user just finished registering with 3D ticket modal
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const lastRegistered = localStorage.getItem('hatgaosky_registered_email');
+      if (lastRegistered) {
+        setEmail(lastRegistered);
+        setPassword('');
+      }
+    }
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -293,13 +312,20 @@ export default function LoginPage() {
             <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
               Chưa có tài khoản Hội viên Hạt Gạo Sky?
             </p>
-            <Link
-              href={`/${locale}/auth/register${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`}
-              className="inline-flex items-center gap-1.5 text-xs font-black text-primary-700 dark:text-gold-400 hover:underline"
+            <button
+              type="button"
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                openRegisterModal({
+                  x: rect.left + rect.width / 2,
+                  y: rect.top + rect.height / 2,
+                });
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-black text-primary-700 dark:text-gold-400 hover:underline cursor-pointer"
             >
               <span>Đăng ký hội viên ngay</span>
               <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            </button>
           </div>
         </div>
       </div>
