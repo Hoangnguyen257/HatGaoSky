@@ -31,10 +31,10 @@ export class PassengerDto {
   @IsDateString()
   dateOfBirth: string;
 
-  @ApiProperty({ example: 'C8912345', required: false })
-  @IsOptional()
+  @ApiProperty({ example: '001200012345', required: true, description: 'Số CCCD hoặc Hộ chiếu của hành khách' })
+  @IsNotEmpty({ message: 'Vui lòng cung cấp số CCCD hoặc Hộ chiếu của hành khách' })
   @IsString()
-  passportNumber?: string;
+  passportNumber: string;
 
   @ApiProperty({ example: 'VNM', default: 'VNM' })
   @IsOptional()

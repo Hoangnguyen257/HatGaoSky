@@ -242,6 +242,12 @@ export class BookingsService {
       // Create Passenger and Ticket records
       let seatIdx = 0;
       for (const p of dto.passengers) {
+        if (!p.passportNumber?.trim()) {
+          throw new BadRequestException(
+            `Hành khách ${p.lastName} ${p.firstName}: Bắt buộc phải cung cấp số CCCD hoặc Hộ chiếu`,
+          );
+        }
+
         const pax = await tx.passenger.create({
           data: {
             bookingId: booking.id,
@@ -249,7 +255,7 @@ export class BookingsService {
             lastName: p.lastName,
             passengerType: p.passengerType,
             dateOfBirth: new Date(p.dateOfBirth),
-            passportNumber: p.passportNumber || null,
+            passportNumber: p.passportNumber.trim(),
             nationality: p.nationality || 'VNM',
           },
         });

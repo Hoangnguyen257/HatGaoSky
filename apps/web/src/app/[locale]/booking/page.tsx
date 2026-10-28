@@ -297,6 +297,11 @@ export default function BookingWizardPage() {
         window.scrollTo({ top: 100, behavior: 'smooth' });
         return;
       }
+      if (!p.passportNumber?.trim()) {
+        setErrorMessage(`Hành khách ${i + 1}: Vui lòng nhập số CCCD hoặc Hộ chiếu`);
+        window.scrollTo({ top: 100, behavior: 'smooth' });
+        return;
+      }
     }
     if (!contactName.trim()) {
       setErrorMessage('Vui lòng nhập họ và tên');
@@ -522,17 +527,23 @@ export default function BookingWizardPage() {
                     </div>
                     <div>
                       <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                        {t('booking.passport')}
+                        {t('booking.passport')} <span className="text-red-500 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         value={p.passportNumber || ''}
+                        required
+                        placeholder="Số CCCD hoặc Hộ chiếu"
+                        onInvalid={(e) => {
+                          const target = e.target as HTMLInputElement;
+                          target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng nhập số CCCD hoặc Hộ chiếu' : '');
+                        }}
+                        onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                         onChange={(e) => {
                           const updated = [...passengers];
                           updated[idx].passportNumber = e.target.value;
                           setPassengers(updated);
                         }}
-                        placeholder="Số Hộ chiếu hoặc CCCD"
                         className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none"
                       />
                     </div>
