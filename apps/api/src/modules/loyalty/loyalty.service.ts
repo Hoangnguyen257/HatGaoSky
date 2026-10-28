@@ -73,7 +73,7 @@ export class LoyaltyService {
   }
 
   async exchangeReward(userId: string, rewardId: string) {
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const account = await tx.loyaltyAccount.findUnique({
         where: { userId },
         include: { user: true },
@@ -127,28 +127,39 @@ export class LoyaltyService {
         },
       });
 
-      await this.emailAdapter.sendEmail({
-        to: account.user.email,
-        subject: `Xác nhận đổi quà thành công - VietSky Lotus Club`,
-        template: 'REWARD_REDEEMED',
-        htmlContent: `
-          <h2>Chúc mừng Quý khách ${account.user.fullName}!</h2>
-          <p>Quý khách vừa đổi thành công phần thưởng: <strong>${reward.title}</strong></p>
-          <p>Số dặm đã trừ: <strong>${reward.milesRequired.toLocaleString()} dặm</strong></p>
-          <p>Số dặm còn lại: <strong>${newAvailable.toLocaleString()} dặm</strong></p>
-          <p>Mã voucher kích hoạt: <strong style="font-size: 18px; color: #f59e0b;">${voucherCode}</strong></p>
-        `,
-      });
-
       return {
-        success: true,
-        voucherCode,
+        userEmail: account.user.email,
+        userName: account.user.fullName,
         rewardTitle: reward.title,
-        milesDeducted: reward.milesRequired,
-        remainingMiles: newAvailable,
-        message: 'Đổi quà thành công! Mã voucher đã được gửi vào email của quý khách.',
+        milesRequired: reward.milesRequired,
+        voucherCode,
+        newAvailable,
       };
     });
+
+    // Send confirmation email asynchronously outside the database transaction
+    this.emailAdapter.sendEmail({
+      to: result.userEmail,
+      subject: `Xác nhận đổi quà thành công - Hạt Gạo Sky Lotus Club`,
+      template: 'REWARD_REDEEMED',
+      htmlContent: `
+        <h2>Chúc mừng Quý khách ${result.userName}!</h2>
+        <p>Quý khách vừa đổi thành công phần thưởng: <strong>${result.rewardTitle}</strong></p>
+        <p>Số dặm đã trừ: <strong>${result.milesRequired.toLocaleString()} dặm</strong></p>
+        <p>Số dặm khả dụng còn lại: <strong>${result.newAvailable.toLocaleString()} dặm</strong></p>
+        <p>Mã voucher kích hoạt: <strong style="font-size: 18px; color: #f59e0b;">${result.voucherCode}</strong></p>
+        <p>Vui lòng xuất trình mã voucher này khi sử dụng dịch vụ tại quầy sân bay hoặc nhập khi đặt vé.</p>
+      `,
+    }).catch((err) => console.error('Failed to send reward email:', err));
+
+    return {
+      success: true,
+      voucherCode: result.voucherCode,
+      rewardTitle: result.rewardTitle,
+      milesDeducted: result.milesRequired,
+      remainingMiles: result.newAvailable,
+      message: 'Đổi quà thành công! Mã voucher đã được gửi vào email của quý khách.',
+    };
   }
 
   async buyMiles(userId: string, dto: BuyMilesDto) {
@@ -166,7 +177,7 @@ export class LoyaltyService {
       throw new BadRequestException('Thanh toán mua dặm thất bại');
     }
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const account = await tx.loyaltyAccount.findUnique({
         where: { userId },
         include: { user: true },
@@ -205,28 +216,37 @@ export class LoyaltyService {
         },
       });
 
-      await this.emailAdapter.sendEmail({
-        to: account.user.email,
-        subject: `Xác nhận mua dặm thưởng thành công - VietSky Lotus Club`,
-        template: 'BUY_MILES_SUCCESS',
-        htmlContent: `
-          <h2>Cảm ơn Quý khách ${account.user.fullName}!</h2>
-          <p>Quý khách đã mua thành công <strong>${dto.milesAmount.toLocaleString()} dặm thưởng</strong>.</p>
-          <p>Tổng tiền thanh toán: <strong>${totalAmount.toLocaleString('vi-VN')} VND</strong></p>
-          <p>Số dặm khả dụng hiện tại: <strong>${updatedAvailable.toLocaleString()} dặm</strong></p>
-          <p>Hạng hội viên hiện tại: <strong>${newTier}</strong></p>
-        `,
-      });
-
       return {
-        success: true,
-        purchasedMiles: dto.milesAmount,
-        totalPaid: totalAmount,
-        availableMiles: updatedAvailable,
-        currentTier: newTier,
+        userEmail: account.user.email,
+        userName: account.user.fullName,
+        updatedAvailable,
+        newTier,
         transactionCode: paymentResult.transactionCode,
-        message: 'Mua dặm thưởng thành công!',
       };
     });
+
+    // Send confirmation email asynchronously outside the database transaction
+    this.emailAdapter.sendEmail({
+      to: result.userEmail,
+      subject: `Xác nhận mua dặm thưởng thành công - Hạt Gạo Sky Lotus Club`,
+      template: 'BUY_MILES_SUCCESS',
+      htmlContent: `
+        <h2>Cảm ơn Quý khách ${result.userName}!</h2>
+        <p>Quý khách đã mua thành công <strong>${dto.milesAmount.toLocaleString()} dặm thưởng</strong>.</p>
+        <p>Tổng tiền thanh toán: <strong>${totalAmount.toLocaleString('vi-VN')} VND</strong></p>
+        <p>Số dặm khả dụng hiện tại: <strong>${result.updatedAvailable.toLocaleString()} dặm</strong></p>
+        <p>Hạng hội viên hiện tại: <strong>${result.newTier}</strong></p>
+      `,
+    }).catch((err) => console.error('Failed to send buy miles email:', err));
+
+    return {
+      success: true,
+      purchasedMiles: dto.milesAmount,
+      totalPaid: totalAmount,
+      availableMiles: result.updatedAvailable,
+      currentTier: result.newTier,
+      transactionCode: result.transactionCode,
+      message: 'Mua dặm thưởng thành công!',
+    };
   }
 }

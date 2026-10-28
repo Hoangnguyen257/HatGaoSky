@@ -18,6 +18,9 @@ import {
   CheckCircle2,
   AlertCircle,
   RefreshCw,
+  Copy,
+  Check,
+  X,
 } from 'lucide-react';
 
 export default function LoyaltyPage() {
@@ -28,6 +31,17 @@ export default function LoyaltyPage() {
   const [account, setAccount] = useState<any | null>(null);
   const [rewards, setRewards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Redeem modal state
+  const [selectedReward, setSelectedReward] = useState<any | null>(null);
+  const [redeeming, setRedeeming] = useState(false);
+  const [redeemSuccess, setRedeemSuccess] = useState<{
+    rewardTitle: string;
+    voucherCode: string;
+    milesDeducted: number;
+    remainingMiles: number;
+  } | null>(null);
+  const [copiedVoucher, setCopiedVoucher] = useState(false);
 
   // Buy miles modal state
   const [buyMilesOpen, setBuyMilesOpen] = useState(false);
@@ -56,21 +70,37 @@ export default function LoyaltyPage() {
     loadData();
   }, []);
 
-  const handleRedeemReward = async (rewardId: string, title: string) => {
+  const handleConfirmRedeem = async () => {
+    if (!selectedReward) return;
+    setRedeeming(true);
     setFeedback(null);
     try {
-      const res = await api.exchangeReward(rewardId);
-      setFeedback({
-        type: 'success',
-        message: `Đổi quà thành công: ${title}! Mã voucher của bạn là: ${res.voucherCode}. Vui lòng kiểm tra email.`,
+      const res = await api.exchangeReward(selectedReward.id);
+      setSelectedReward(null);
+      setRedeeming(false);
+      setRedeemSuccess({
+        rewardTitle: selectedReward.title,
+        voucherCode: res.voucherCode,
+        milesDeducted: res.milesDeducted,
+        remainingMiles: res.remainingMiles,
       });
       loadData();
       refreshProfile();
     } catch (err: any) {
+      setRedeeming(false);
       setFeedback({
         type: 'error',
-        message: err.message || 'Không thể đổi quà',
+        message: err.message || 'Không thể thực hiện đổi quà thưởng',
       });
+      setSelectedReward(null);
+    }
+  };
+
+  const copyVoucherCode = (code: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(code);
+      setCopiedVoucher(true);
+      setTimeout(() => setCopiedVoucher(false), 2500);
     }
   };
 
@@ -251,7 +281,7 @@ export default function LoyaltyPage() {
                       <button
                         type="button"
                         disabled={!canAfford}
-                        onClick={() => handleRedeemReward(r.id, r.title)}
+                        onClick={() => setSelectedReward(r)}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
                           canAfford
                             ? 'bg-primary-900 hover:bg-primary-800 text-white shadow-sm'
@@ -320,6 +350,161 @@ export default function LoyaltyPage() {
             </div>
           </div>
         </div>
+
+        {/* Modal: Confirm Reward Redemption */}
+        {selectedReward && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-gold-100 dark:bg-gold-950/50 text-gold-600 flex items-center justify-center">
+                    <Gift className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                      Xác nhận đổi quà tặng
+                    </h3>
+                    <p className="text-[11px] text-slate-500">Hạt Gạo Sky Lotus Club Rewards</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedReward(null)}
+                  className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-750 space-y-2">
+                <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-primary-100 text-primary-800 dark:bg-primary-950/50 dark:text-primary-300">
+                  {selectedReward.category}
+                </span>
+                <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                  {selectedReward.title}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {selectedReward.description}
+                </p>
+              </div>
+
+              <div className="space-y-2 text-xs font-semibold">
+                <div className="flex justify-between text-slate-500">
+                  <span>Dặm thưởng hiện có:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {account?.availableMiles?.toLocaleString()} dặm
+                  </span>
+                </div>
+                <div className="flex justify-between text-amber-600 dark:text-gold-400">
+                  <span>Số dặm sẽ trừ:</span>
+                  <span className="font-bold">
+                    -{selectedReward.milesRequired?.toLocaleString()} dặm
+                  </span>
+                </div>
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex justify-between font-bold text-slate-900 dark:text-white">
+                  <span>Số dặm còn lại sau khi đổi:</span>
+                  <span className="text-primary-700 dark:text-primary-400 text-sm">
+                    {Math.max(0, (account?.availableMiles || 0) - selectedReward.milesRequired).toLocaleString()} dặm
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  disabled={redeeming}
+                  onClick={() => setSelectedReward(null)}
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition"
+                >
+                  Hủy bỏ
+                </button>
+                <button
+                  type="button"
+                  disabled={redeeming}
+                  onClick={handleConfirmRedeem}
+                  className="px-5 py-2.5 bg-primary-900 hover:bg-primary-800 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2"
+                >
+                  {redeeming ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Đang xử lý đổi quà...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Gift className="w-4 h-4" />
+                      <span>Xác nhận đổi ngay</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Redeem Success Celebration */}
+        {redeemSuccess && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full border border-emerald-200 dark:border-emerald-900/50 shadow-2xl text-center space-y-5">
+              <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+                <CheckCircle2 className="w-9 h-9" />
+              </div>
+
+              <div>
+                <span className="text-xs font-extrabold uppercase text-gold-600 dark:text-gold-400 tracking-wider">
+                  Lotus Club Reward
+                </span>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+                  Đổi quà thành công!
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Quý khách đã đổi thành công <strong>{redeemSuccess.rewardTitle}</strong>
+                </p>
+              </div>
+
+              {/* Voucher Box */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border-2 border-dashed border-gold-400 dark:border-gold-600 space-y-2">
+                <span className="text-[11px] font-semibold text-slate-500 block">
+                  MÃ VOUCHER KÍCH HOẠT DỊCH VỤ
+                </span>
+                <div className="flex items-center justify-center gap-3">
+                  <span className="text-xl sm:text-2xl font-black tracking-widest text-primary-900 dark:text-white select-all">
+                    {redeemSuccess.voucherCode}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => copyVoucherCode(redeemSuccess.voucherCode)}
+                    className="p-2 rounded-xl bg-white dark:bg-slate-700 hover:bg-slate-100 text-slate-700 dark:text-slate-200 shadow-sm transition border border-slate-200 dark:border-slate-600"
+                    title="Sao chép mã voucher"
+                  >
+                    {copiedVoucher ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+                {copiedVoucher && (
+                  <p className="text-[11px] font-bold text-emerald-600 animate-in fade-in">
+                    ✓ Đã sao chép mã vào clipboard!
+                  </p>
+                )}
+              </div>
+
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl text-xs text-emerald-800 dark:text-emerald-200 flex justify-between font-bold">
+                <span>Số dặm đã trừ: -{redeemSuccess.milesDeducted?.toLocaleString()}</span>
+                <span>Dặm còn lại: {redeemSuccess.remainingMiles?.toLocaleString()}</span>
+              </div>
+
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                Mã voucher đã được gửi vào email cá nhân và lưu tại bảng Lịch sử biến động dặm bên dưới. Quý khách có thể xuất trình mã này tại quầy sân bay hoặc nhập khi thanh toán vé máy bay.
+              </p>
+
+              <button
+                type="button"
+                onClick={() => setRedeemSuccess(null)}
+                className="w-full py-3 bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer"
+              >
+                Hoàn tất & Đóng
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Modal: Buy Miles */}
         {buyMilesOpen && (
