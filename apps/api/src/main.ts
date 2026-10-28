@@ -1,3 +1,13 @@
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Ensure .env is loaded in development, production build, and all environments
+dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+dotenv.config({ path: path.resolve(process.cwd(), 'apps/api/.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';

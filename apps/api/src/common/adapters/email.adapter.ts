@@ -26,8 +26,8 @@ export class ConsoleAndDbEmailAdapter implements EmailAdapter {
     const host = process.env.SMTP_HOST || 'smtp.gmail.com';
     const port = parseInt(process.env.SMTP_PORT || '587', 10);
     const secure = process.env.SMTP_SECURE === 'true' || port === 465;
-    const user = process.env.SMTP_USER;
-    const pass = process.env.SMTP_PASS;
+    const user = process.env.SMTP_USER?.trim();
+    const pass = process.env.SMTP_PASS?.replace(/\s+/g, '').trim();
 
     if (user && pass) {
       this.transporter = nodemailer.createTransport({
@@ -35,17 +35,25 @@ export class ConsoleAndDbEmailAdapter implements EmailAdapter {
         port,
         secure,
         auth: { user, pass },
+        tls: {
+          rejectUnauthorized: false,
+        },
       });
       this.logger.log(`SMTP Transporter initialized for real email sending (${host}:${port}, user: ${user})`);
     } else {
       this.logger.warn(
-        `SMTP credentials not provided in .env (SMTP_USER, SMTP_PASS). Emails will be recorded to DB and logged in console. Configure SMTP_USER and SMTP_PASS to send real emails to inboxes.`
+        `SMTP credentials not provided in environment (SMTP_USER, SMTP_PASS). Emails will be recorded to DB and logged in console. Set SMTP_USER and SMTP_PASS to send real emails to inboxes.`
       );
     }
   }
 
   async sendEmail(options: SendEmailOptions): Promise<boolean> {
     this.logger.log(`📧 [EMAIL DISPATCH] To: ${options.to} | Subject: "${options.subject}" [Template: ${options.template}]`);
+
+    // Dynamically re-attempt initialization if environment variables were injected after boot
+    if (!this.transporter) {
+      this.initTransporter();
+    }
 
     let sentViaSmtp = false;
     let smtpError: string | null = null;
