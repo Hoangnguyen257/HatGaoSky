@@ -6,7 +6,7 @@ import { useLocale } from 'next-intl';
 import { api } from '../../../../lib/api';
 import { RoleGuard } from '../../../../components/layout/RoleGuard';
 import { CustomerNav } from '../../../../components/layout/CustomerNav';
-import { Plane, Calendar, ArrowRight, ShieldCheck, Clock } from 'lucide-react';
+import { Plane, Calendar, ArrowRight, ShieldCheck, Clock, Ticket } from 'lucide-react';
 
 export default function CustomerBookingsPage() {
   const locale = useLocale();
@@ -110,10 +110,10 @@ export default function CustomerBookingsPage() {
 
                     <Link
                       href={`/${locale}/manage-booking?pnr=${b.pnr}&email=${b.customerEmail}`}
-                      className="px-4 py-2 bg-primary-50 dark:bg-slate-800 hover:bg-primary-100 text-primary-900 dark:text-primary-300 font-bold text-xs rounded-xl flex items-center gap-1.5 transition"
+                      className="px-4 py-2 bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-sm transition"
                     >
-                      <span>Quản lý vé</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
+                      <Ticket className="w-3.5 h-3.5 text-gold-400" />
+                      <span>Xem thẻ lên tàu bay</span>
                     </Link>
                   </div>
                 </div>

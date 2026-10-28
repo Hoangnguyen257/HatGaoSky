@@ -390,3 +390,24 @@ body {
 .animate-stagger-4 { animation: fieldStaggerIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.20s both; }
 .animate-stagger-5 { animation: fieldStaggerIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both; }
 .animate-stagger-6 { animation: fieldStaggerIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) 0.30s both; }
+
+/* Boarding Pass Print Optimization */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  header, footer, nav, .print\:hidden {
+    display: none !important;
+  }
+  .boarding-pass-container {
+    box-shadow: none !important;
+    border: 1px solid #cbd5e1 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 1.5rem 0 !important;
+  }
+}
+

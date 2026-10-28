@@ -358,6 +358,7 @@ export class BookingsService {
         passengers: true,
         tickets: {
           include: {
+            passenger: true,
             flight: {
               include: { originAirport: true, destinationAirport: true, aircraft: true },
             },
@@ -381,10 +382,12 @@ export class BookingsService {
     return this.prisma.booking.findMany({
       where: { userId },
       include: {
+        passengers: true,
         tickets: {
           include: {
+            passenger: true,
             flight: {
-              include: { originAirport: true, destinationAirport: true },
+              include: { originAirport: true, destinationAirport: true, aircraft: true },
             },
             seat: true,
           },
@@ -680,7 +683,11 @@ export class BookingsService {
       include: {
         passengers: true,
         tickets: {
-          include: { flight: { include: { originAirport: true, destinationAirport: true } } },
+          include: {
+            passenger: true,
+            flight: { include: { originAirport: true, destinationAirport: true, aircraft: true } },
+            seat: true,
+          },
         },
         services: true,
         requestLogs: { include: { staff: true } },

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { api } from '../../../lib/api';
+import { BoardingPassCard } from '../../../components/public/BoardingPassCard';
 import {
   Search,
   Plane,
@@ -237,39 +238,32 @@ export default function ManageBookingPage() {
             </div>
           )}
 
-          {/* Tickets & Flights Information */}
+          {/* Tickets & Boarding Passes Information */}
           <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-              {t('manage.ticketDetails')}
-            </h3>
-            <div className="space-y-3">
-              {booking.tickets?.map((tkt: any) => (
-                <div
-                  key={tkt.id}
-                  className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4 text-xs"
-                >
-                  <div>
-                    <span className="font-extrabold text-sm text-slate-900 dark:text-white block">
-                      {t('manage.ticketNum')}: {tkt.ticketNumber} · {tkt.cabinClass}
-                    </span>
-                    <span className="text-slate-500 mt-1 block">
-                      {t('manage.passenger')}: <strong>{tkt.passenger?.lastName} {tkt.passenger?.firstName}</strong> ({tkt.passenger?.passengerType})
-                    </span>
-                  </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
+                {t('manage.ticketDetails')} ({booking.tickets?.length || 0} vé)
+              </h3>
+              <span className="text-xs text-slate-500 font-medium">
+                Xuất trình thẻ lên tàu bay điện tử hoặc in vé tại quầy làm thủ tục
+              </span>
+            </div>
 
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <span className="text-slate-400 text-[10px] block">{t('manage.seatNumber')}</span>
-                      <strong className="text-base font-black text-primary-900 dark:text-white">
-                        {tkt.seat?.seatNumber || 'N/A'}
-                      </strong>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-slate-400 text-[10px] block">{t('manage.ticketStatus')}</span>
-                      <span className="text-emerald-600 font-bold">{tkt.status}</span>
-                    </div>
-                  </div>
-                </div>
+            <div className="space-y-6">
+              {booking.tickets?.map((tkt: any, idx: number) => (
+                <BoardingPassCard
+                  key={tkt.id || idx}
+                  ticket={tkt}
+                  pnr={booking.pnr}
+                  bookingStatus={booking.status}
+                  customerEmail={booking.customerEmail}
+                  passengerFallback={
+                    tkt.passenger ||
+                    booking.passengers?.find((p: any) => p.id === tkt.passengerId) ||
+                    booking.passengers?.[idx] ||
+                    booking.passengers?.[0]
+                  }
+                />
               ))}
             </div>
           </div>
