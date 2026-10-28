@@ -10,9 +10,15 @@ async function bootstrap() {
   // Global Prefix: /api
   app.setGlobalPrefix('api');
 
-  // CORS configuration for Next.js frontend
+  // CORS configuration for Next.js frontend (local + Vercel deployment)
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    /https:\/\/.*\.vercel\.app$/,   // all Vercel preview & production domains
+    /https:\/\/.*\.onrender\.com$/, // cross-service on Render
+  ];
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:3000'],
+    origin: allowedOrigins,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
