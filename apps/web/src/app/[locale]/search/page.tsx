@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import { useAuth } from '../../../context/AuthContext';
 import { api } from '../../../lib/api';
 import { FlightCard } from '../../../components/public/FlightCard';
 import { CompareModal } from '../../../components/public/CompareModal';
@@ -94,6 +95,8 @@ export default function SearchResultsPage() {
     }
   };
 
+  const { user } = useAuth();
+
   const handleSelectFare = (flight: any, selectedCabin: string, fare?: any) => {
     // Navigate to booking wizard with flight and cabin info
     const q = new URLSearchParams({
@@ -106,7 +109,15 @@ export default function SearchResultsPage() {
       q.append('returnFlightId', searchResult.returnFlights[0].id);
     }
 
-    router.push(`/${locale}/booking?${q.toString()}`);
+    const bookingTarget = `/${locale}/booking?${q.toString()}`;
+
+    // Yêu cầu đăng nhập trước khi tiến hành đặt vé
+    if (!user) {
+      router.push(`/${locale}/auth/login?redirect=${encodeURIComponent(bookingTarget)}`);
+      return;
+    }
+
+    router.push(bookingTarget);
   };
 
   return (

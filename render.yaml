@@ -24,3 +24,4 @@ services:
         value: "15"
       - key: PAYMENT_HOLD_MINUTES
         value: "30"
+

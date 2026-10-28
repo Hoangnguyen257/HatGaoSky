@@ -253,7 +253,7 @@ export const LoginModal: React.FC = () => {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                  Địa chỉ Email
+                  Địa chỉ Email <span className="text-red-500 font-bold">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -262,8 +262,19 @@ export const LoginModal: React.FC = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onFocus={() => !isLanded && setIsLanded(true)}
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      if (target.validity.valueMissing) {
+                        target.setCustomValidity('Vui lòng nhập địa chỉ email');
+                      } else if (target.validity.typeMismatch) {
+                        target.setCustomValidity('Vui lòng nhập địa chỉ email hợp lệ (ví dụ: name@example.com)');
+                      } else {
+                        target.setCustomValidity('');
+                      }
+                    }}
+                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                     className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
-                    placeholder="name@vietsky.vn"
+                    placeholder="name@hatgaosky.vn"
                     required
                   />
                 </div>
@@ -272,7 +283,7 @@ export const LoginModal: React.FC = () => {
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Mật khẩu
+                    Mật khẩu <span className="text-red-500 font-bold">*</span>
                   </label>
                   <Link
                     href={`/${locale}/auth/forgot-password`}
@@ -289,6 +300,11 @@ export const LoginModal: React.FC = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => !isLanded && setIsLanded(true)}
+                    onInvalid={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng nhập mật khẩu' : '');
+                    }}
+                    onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                     className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
                     placeholder="••••••••"
                     required

@@ -477,7 +477,7 @@ export const RegisterTicketModal: React.FC = () => {
                 {/* Field 1: Full Name */}
                 <div className={isMorphedOrMorphing ? 'animate-stagger-1' : 'opacity-0'}>
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                    Họ và tên đầy đủ *
+                    Họ và tên đầy đủ <span className="text-red-500 font-bold">*</span>
                   </label>
                   <div className="relative">
                     <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -485,6 +485,11 @@ export const RegisterTicketModal: React.FC = () => {
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
+                      onInvalid={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng nhập họ và tên' : '');
+                      }}
+                      onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                       placeholder="Nguyễn Văn An"
                       className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
                       required
@@ -495,7 +500,7 @@ export const RegisterTicketModal: React.FC = () => {
                 {/* Field 2: Email */}
                 <div className={isMorphedOrMorphing ? 'animate-stagger-2' : 'opacity-0'}>
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                    Email nhận vé & thông báo *
+                    Email nhận vé & thông báo <span className="text-red-500 font-bold">*</span>
                   </label>
                   <div className="relative">
                     <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -503,6 +508,17 @@ export const RegisterTicketModal: React.FC = () => {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      onInvalid={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        if (target.validity.valueMissing) {
+                          target.setCustomValidity('Vui lòng nhập địa chỉ email');
+                        } else if (target.validity.typeMismatch) {
+                          target.setCustomValidity('Vui lòng nhập địa chỉ email hợp lệ (ví dụ: name@example.com)');
+                        } else {
+                          target.setCustomValidity('');
+                        }
+                      }}
+                      onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                       placeholder="name@example.com"
                       className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
                       required
@@ -513,7 +529,7 @@ export const RegisterTicketModal: React.FC = () => {
                 {/* Field 3: Phone */}
                 <div className={isMorphedOrMorphing ? 'animate-stagger-3' : 'opacity-0'}>
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                    Số điện thoại liên hệ *
+                    Số điện thoại liên hệ <span className="text-red-500 font-bold">*</span>
                   </label>
                   <div className="relative">
                     <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -521,6 +537,11 @@ export const RegisterTicketModal: React.FC = () => {
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
+                      onInvalid={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng nhập số điện thoại' : '');
+                      }}
+                      onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                       placeholder="0912345678"
                       className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
                       required
@@ -532,7 +553,7 @@ export const RegisterTicketModal: React.FC = () => {
                 <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${isMorphedOrMorphing ? 'animate-stagger-4' : 'opacity-0'}`}>
                   <div>
                     <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Mật khẩu (≥ 6 ký tự) *
+                      Mật khẩu (≥ 6 ký tự) <span className="text-red-500 font-bold">*</span>
                     </label>
                     <div className="relative">
                       <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -540,16 +561,28 @@ export const RegisterTicketModal: React.FC = () => {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
+                        onInvalid={(e) => {
+                          const target = e.target as HTMLInputElement;
+                          if (target.validity.valueMissing) {
+                            target.setCustomValidity('Vui lòng nhập mật khẩu');
+                          } else if (target.validity.tooShort) {
+                            target.setCustomValidity('Mật khẩu phải có tối thiểu 6 ký tự');
+                          } else {
+                            target.setCustomValidity('');
+                          }
+                        }}
+                        onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                         placeholder="••••••••"
                         className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
                         required
+                        minLength={6}
                       />
                     </div>
                   </div>
 
                   <div>
                     <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                      Xác nhận mật khẩu *
+                      Xác nhận mật khẩu <span className="text-red-500 font-bold">*</span>
                     </label>
                     <div className="relative">
                       <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -557,6 +590,11 @@ export const RegisterTicketModal: React.FC = () => {
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
+                        onInvalid={(e) => {
+                          const target = e.target as HTMLInputElement;
+                          target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng xác nhận mật khẩu' : '');
+                        }}
+                        onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                         placeholder="••••••••"
                         className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary-500 transition"
                         required
@@ -571,13 +609,21 @@ export const RegisterTicketModal: React.FC = () => {
                     <input
                       type="checkbox"
                       checked={agreedTerms}
-                      onChange={(e) => setAgreedTerms(e.target.checked)}
+                      onInvalid={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng đồng ý với điều khoản dịch vụ và chính sách hội viên' : '');
+                      }}
+                      onChange={(e) => {
+                        (e.target as HTMLInputElement).setCustomValidity('');
+                        setAgreedTerms(e.target.checked);
+                      }}
                       className="mt-0.5 w-4 h-4 rounded text-primary-600 focus:ring-primary-500 cursor-pointer"
+                      required
                     />
                     <span>
                       Tôi đồng ý với{' '}
                       <span className="font-bold text-primary-600 dark:text-gold-400">Điều khoản dịch vụ</span>{' '}
-                      và <span className="font-bold text-primary-600 dark:text-gold-400">Chính sách hội viên Lotus Club</span> của Hạt Gạo Sky.
+                      và <span className="font-bold text-primary-600 dark:text-gold-400">Chính sách hội viên Lotus Club</span> của Hạt Gạo Sky. <span className="text-red-500 font-bold">*</span>
                     </span>
                   </label>
                 </div>

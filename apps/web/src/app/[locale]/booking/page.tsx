@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import { useAuth } from '../../../context/AuthContext';
 import { api } from '../../../lib/api';
 import { SeatMap } from '../../../components/public/SeatMap';
 import {
@@ -35,6 +36,15 @@ export default function BookingWizardPage() {
   const returnFlightId = searchParams.get('returnFlightId') || '';
   const initialCabinClass = searchParams.get('cabinClass') || 'ECONOMY';
   const paxCount = Number(searchParams.get('passengers') || '1');
+  const { user } = useAuth();
+
+  // Redirect to login if user is not authenticated
+  useEffect(() => {
+    if (!user && typeof window !== 'undefined') {
+      const fullPath = window.location.pathname + window.location.search;
+      router.push(`/${locale}/auth/login?redirect=${encodeURIComponent(fullPath)}`);
+    }
+  }, [user, router, locale]);
 
   const [step, setStep] = useState<number>(1);
   const [sessionId] = useState(() => `sess-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`);
@@ -157,6 +167,29 @@ export default function BookingWizardPage() {
     setIsSubmitting(true);
     setErrorMessage(null);
 
+    if (paymentType !== 'PAY_LATER' && paymentMethod === 'CREDIT_CARD') {
+      if (!cardNumber.trim()) {
+        setErrorMessage('Vui lòng nhập số thẻ thanh toán');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!cardHolder.trim()) {
+        setErrorMessage('Vui lòng nhập tên chủ thẻ');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!cardExpiry.trim()) {
+        setErrorMessage('Vui lòng nhập hạn thẻ (MM/YY)');
+        setIsSubmitting(false);
+        return;
+      }
+      if (!cardCvv.trim()) {
+        setErrorMessage('Vui lòng nhập mã CVV');
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     try {
       // 1. Prepare Services Array
       const servicesList: any[] = [];
@@ -243,6 +276,44 @@ export default function BookingWizardPage() {
       setErrorMessage(err.message || 'Xử lý đặt vé không thành công');
       setIsSubmitting(false);
     }
+  };
+
+  const handleProceedFromStep1 = () => {
+    setErrorMessage(null);
+    for (let i = 0; i < passengers.length; i++) {
+      const p = passengers[i];
+      if (!p.lastName?.trim()) {
+        setErrorMessage(`Hành khách ${i + 1}: Vui lòng nhập họ và tên đệm`);
+        window.scrollTo({ top: 100, behavior: 'smooth' });
+        return;
+      }
+      if (!p.firstName?.trim()) {
+        setErrorMessage(`Hành khách ${i + 1}: Vui lòng nhập tên hành khách`);
+        window.scrollTo({ top: 100, behavior: 'smooth' });
+        return;
+      }
+      if (!p.dateOfBirth) {
+        setErrorMessage(`Hành khách ${i + 1}: Vui lòng chọn ngày sinh`);
+        window.scrollTo({ top: 100, behavior: 'smooth' });
+        return;
+      }
+    }
+    if (!contactName.trim()) {
+      setErrorMessage('Vui lòng nhập họ và tên');
+      window.scrollTo({ top: 100, behavior: 'smooth' });
+      return;
+    }
+    if (!contactEmail.trim() || !contactEmail.includes('@')) {
+      setErrorMessage('Vui lòng nhập địa chỉ email');
+      window.scrollTo({ top: 100, behavior: 'smooth' });
+      return;
+    }
+    if (!contactPhone.trim() || contactPhone.trim().length < 9) {
+      setErrorMessage('Vui lòng nhập số điện thoại');
+      window.scrollTo({ top: 100, behavior: 'smooth' });
+      return;
+    }
+    setStep(2);
   };
 
   const stepsList = [
@@ -349,11 +420,18 @@ export default function BookingWizardPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                        {t('booking.lastName')} *
+                        {t('booking.lastName')} <span className="text-red-500 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         value={p.lastName}
+                        required
+                        placeholder="Nguyễn Văn"
+                        onInvalid={(e) => {
+                          const target = e.target as HTMLInputElement;
+                          target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng nhập họ và tên đệm' : '');
+                        }}
+                        onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                         onChange={(e) => {
                           const updated = [...passengers];
                           updated[idx].lastName = e.target.value;
@@ -364,11 +442,18 @@ export default function BookingWizardPage() {
                     </div>
                     <div>
                       <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                        {t('booking.firstName')} *
+                        {t('booking.firstName')} <span className="text-red-500 font-bold">*</span>
                       </label>
                       <input
                         type="text"
                         value={p.firstName}
+                        required
+                        placeholder="An"
+                        onInvalid={(e) => {
+                          const target = e.target as HTMLInputElement;
+                          target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng nhập tên hành khách' : '');
+                        }}
+                        onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                         onChange={(e) => {
                           const updated = [...passengers];
                           updated[idx].firstName = e.target.value;
@@ -379,11 +464,17 @@ export default function BookingWizardPage() {
                     </div>
                     <div>
                       <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                        {t('booking.dob')} *
+                        {t('booking.dob')} <span className="text-red-500 font-bold">*</span>
                       </label>
                       <input
                         type="date"
                         value={p.dateOfBirth}
+                        required
+                        onInvalid={(e) => {
+                          const target = e.target as HTMLInputElement;
+                          target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng chọn ngày sinh' : '');
+                        }}
+                        onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                         onChange={(e) => {
                           const updated = [...passengers];
                           updated[idx].dateOfBirth = e.target.value;
@@ -420,33 +511,60 @@ export default function BookingWizardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                      {t('booking.contactName')} *
+                      {t('booking.contactName')} <span className="text-red-500 font-bold">*</span>
                     </label>
                     <input
                       type="text"
                       value={contactName}
+                      required
+                      placeholder="Nguyễn Văn An"
+                      onInvalid={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng nhập họ và tên' : '');
+                      }}
+                      onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                       onChange={(e) => setContactName(e.target.value)}
                       className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none"
                     />
                   </div>
                   <div>
                     <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                      {t('booking.contactEmail')} *
+                      {t('booking.contactEmail')} <span className="text-red-500 font-bold">*</span>
                     </label>
                     <input
                       type="email"
                       value={contactEmail}
+                      required
+                      placeholder="name@example.com"
+                      onInvalid={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        if (target.validity.valueMissing) {
+                          target.setCustomValidity('Vui lòng nhập địa chỉ email');
+                        } else if (target.validity.typeMismatch) {
+                          target.setCustomValidity('Vui lòng nhập địa chỉ email hợp lệ (ví dụ: name@example.com)');
+                        } else {
+                          target.setCustomValidity('');
+                        }
+                      }}
+                      onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                       onChange={(e) => setContactEmail(e.target.value)}
                       className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none"
                     />
                   </div>
                   <div>
                     <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                      {t('booking.contactPhone')} *
+                      {t('booking.contactPhone')} <span className="text-red-500 font-bold">*</span>
                     </label>
                     <input
                       type="text"
                       value={contactPhone}
+                      required
+                      placeholder="0912345678"
+                      onInvalid={(e) => {
+                        const target = e.target as HTMLInputElement;
+                        target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng nhập số điện thoại' : '');
+                      }}
+                      onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                       onChange={(e) => setContactPhone(e.target.value)}
                       className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none"
                     />
@@ -518,8 +636,8 @@ export default function BookingWizardPage() {
               <div className="pt-4 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setStep(2)}
-                  className="px-6 py-3 rounded-2xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs flex items-center gap-2 shadow-md transition"
+                  onClick={handleProceedFromStep1}
+                  className="px-6 py-3 rounded-2xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs flex items-center gap-2 shadow-md transition cursor-pointer"
                 >
                   <span>Tiếp tục: Chọn chỗ ngồi</span>
                   <ChevronRight className="w-4 h-4" />
@@ -920,48 +1038,104 @@ export default function BookingWizardPage() {
                   {paymentMethod === 'CREDIT_CARD' && (
                     <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
                       <div>
-                        <label className="font-semibold text-slate-500 block mb-1">Số thẻ (Mock Card)</label>
+                        <label className="font-semibold text-slate-500 block mb-1">
+                          Số thẻ (Mock Card) <span className="text-red-500 font-bold">*</span>
+                        </label>
                         <input
                           type="text"
+                          required
                           value={cardNumber}
-                          onChange={(e) => setCardNumber(e.target.value)}
+                          onChange={(e) => {
+                            setCardNumber(e.target.value);
+                            e.currentTarget.setCustomValidity('');
+                          }}
+                          onInvalid={(e) => {
+                            const target = e.currentTarget;
+                            if (target.validity.valueMissing) {
+                              target.setCustomValidity('Vui lòng nhập số thẻ thanh toán');
+                            }
+                          }}
+                          onInput={(e) => e.currentTarget.setCustomValidity('')}
+                          placeholder="4111 2222 3333 4444"
                           className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 font-mono font-bold"
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="font-semibold text-slate-500 block mb-1">Tên chủ thẻ</label>
+                          <label className="font-semibold text-slate-500 block mb-1">
+                            Tên chủ thẻ <span className="text-red-500 font-bold">*</span>
+                          </label>
                           <input
                             type="text"
+                            required
                             value={cardHolder}
-                            onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+                            onChange={(e) => {
+                              setCardHolder(e.target.value.toUpperCase());
+                              e.currentTarget.setCustomValidity('');
+                            }}
+                            onInvalid={(e) => {
+                              const target = e.currentTarget;
+                              if (target.validity.valueMissing) {
+                                target.setCustomValidity('Vui lòng nhập tên chủ thẻ');
+                              }
+                            }}
+                            onInput={(e) => e.currentTarget.setCustomValidity('')}
+                            placeholder="NGUYEN VAN A"
                             className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 font-bold uppercase"
                           />
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                           <div>
-                            <label className="font-semibold text-slate-500 block mb-1">Hạn (MM/YY)</label>
+                            <label className="font-semibold text-slate-500 block mb-1">
+                              Hạn (MM/YY) <span className="text-red-500 font-bold">*</span>
+                            </label>
                             <input
                               type="text"
+                              required
                               value={cardExpiry}
-                              onChange={(e) => setCardExpiry(e.target.value)}
-                              className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 font-mono"
-                            />
-                          </div>
-                          <div>
-                            <label className="font-semibold text-slate-500 block mb-1">CVV</label>
-                            <input
-                              type="password"
-                              maxLength={4}
-                              value={cardCvv}
-                              onChange={(e) => setCardCvv(e.target.value)}
-                              className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 font-mono"
-                            />
-                          </div>
+                              onChange={(e) => {
+                                setCardExpiry(e.target.value);
+                                e.currentTarget.setCustomValidity('');
+                              }}
+                              onInvalid={(e) => {
+                                const target = e.currentTarget;
+                                if (target.validity.valueMissing) {
+                                target.setCustomValidity('Vui lòng nhập hạn thẻ (MM/YY)');
+                              }
+                            }}
+                            onInput={(e) => e.currentTarget.setCustomValidity('')}
+                            placeholder="12/28"
+                            className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="font-semibold text-slate-500 block mb-1">
+                            CVV <span className="text-red-500 font-bold">*</span>
+                          </label>
+                          <input
+                            type="password"
+                            maxLength={4}
+                            required
+                            value={cardCvv}
+                            onChange={(e) => {
+                              setCardCvv(e.target.value);
+                              e.currentTarget.setCustomValidity('');
+                            }}
+                            onInvalid={(e) => {
+                              const target = e.currentTarget;
+                              if (target.validity.valueMissing) {
+                                target.setCustomValidity('Vui lòng nhập mã bảo mật CVV');
+                              }
+                            }}
+                            onInput={(e) => e.currentTarget.setCustomValidity('')}
+                            placeholder="123"
+                            className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 font-mono"
+                          />
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
                   {/* VietQR / Bank Transfer View */}
                   {paymentMethod === 'BANK_TRANSFER' && (

@@ -2,22 +2,26 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '../../../../context/AuthContext';
-import { Plane, Lock, Mail, AlertCircle, ShieldCheck, KeyRound, RotateCcw, FastForward, Sparkles } from 'lucide-react';
+import { Plane, Lock, Mail, AlertCircle, ShieldCheck, KeyRound, RotateCcw, FastForward, Sparkles, ArrowRight } from 'lucide-react';
 import { AirplaneTowAnimation } from '../../../../components/auth/AirplaneTowAnimation';
 
 export default function LoginPage() {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect');
   const { user, login, verifyMfa } = useAuth();
 
-  // If already logged in, redirect to home or role portal
+  // If already logged in, redirect to intended page or role portal
   useEffect(() => {
     if (user) {
-      if (user.role === 'ADMIN') {
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else if (user.role === 'ADMIN') {
         router.push(`/${locale}/admin/users`);
       } else if (user.role === 'STAFF_MANAGER') {
         router.push(`/${locale}/manager/dashboard`);
@@ -27,7 +31,7 @@ export default function LoginPage() {
         router.push(`/${locale}`);
       }
     }
-  }, [user, router, locale]);
+  }, [user, router, locale, redirectUrl]);
 
   const [email, setEmail] = useState('customer@vietsky.vn');
   const [password, setPassword] = useState('Customer@123456');
@@ -74,7 +78,11 @@ export default function LoginPage() {
         return;
       }
 
-      router.push(`/${locale}`);
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else {
+        router.push(`/${locale}`);
+      }
     } catch (err: any) {
       setError(err.message || 'Đăng nhập không thành công');
       setLoading(false);
@@ -88,7 +96,11 @@ export default function LoginPage() {
     try {
       await verifyMfa(mfaSessionToken, otpCode);
       setMfaModalOpen(false);
-      router.push(`/${locale}`);
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else {
+        router.push(`/${locale}`);
+      }
     } catch (err: any) {
       setMfaError(err.message || 'Mã OTP không chính xác. Vui lòng nhập: 123456');
     }
@@ -146,9 +158,18 @@ export default function LoginPage() {
               {t('nav.login')}
             </h1>
             <p className="text-xs text-slate-500">
-              Truy cập tài khoản Hội viên Lotus Club hoặc Cổng vận hành nội bộ
+              {redirectUrl
+                ? 'Quý khách vui lòng đăng nhập tài khoản để tiếp tục đặt vé máy bay'
+                : 'Truy cập tài khoản Hội viên Lotus Club hoặc Cổng vận hành nội bộ'}
             </p>
           </div>
+
+          {redirectUrl && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl flex items-center gap-2 text-xs text-blue-800 dark:text-blue-300">
+              <Sparkles className="w-4 h-4 text-gold-500 flex-shrink-0" />
+              <span>Chuyến bay đã chọn đang được giữ. Vui lòng đăng nhập để hoàn tất đặt chỗ.</span>
+            </div>
+          )}
 
           {error && (
             <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-xl flex items-center gap-2 text-xs text-red-700 dark:text-red-300">
@@ -160,7 +181,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Địa chỉ Email
+                Địa chỉ Email <span className="text-red-500 font-bold">*</span>
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -169,6 +190,18 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   onFocus={() => !isLanded && setIsLanded(true)}
+                  onInvalid={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (target.validity.valueMissing) {
+                      target.setCustomValidity('Vui lòng nhập địa chỉ email');
+                    } else if (target.validity.typeMismatch) {
+                      target.setCustomValidity('Vui lòng nhập địa chỉ email hợp lệ (ví dụ: name@example.com)');
+                    } else {
+                      target.setCustomValidity('');
+                    }
+                  }}
+                  onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
+                  placeholder="customer@hatgaosky.vn"
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none"
                   required
                 />
@@ -178,7 +211,7 @@ export default function LoginPage() {
             <div>
               <div className="flex justify-between items-center mb-1">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Mật khẩu
+                  Mật khẩu <span className="text-red-500 font-bold">*</span>
                 </label>
                 <Link
                   href={`/${locale}/auth/forgot-password`}
@@ -194,6 +227,16 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   onFocus={() => !isLanded && setIsLanded(true)}
+                  onInvalid={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (target.validity.valueMissing) {
+                      target.setCustomValidity('Vui lòng nhập mật khẩu');
+                    } else {
+                      target.setCustomValidity('');
+                    }
+                  }}
+                  onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
+                  placeholder="••••••••"
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none"
                   required
                 />
@@ -246,10 +289,16 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="text-center text-xs text-slate-500">
-            Chưa có tài khoản?{' '}
-            <Link href={`/${locale}/auth/register`} className="font-bold text-primary-600 hover:underline">
-              Đăng ký hội viên ngay
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 text-center space-y-1.5">
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+              Chưa có tài khoản Hội viên Hạt Gạo Sky?
+            </p>
+            <Link
+              href={`/${locale}/auth/register${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`}
+              className="inline-flex items-center gap-1.5 text-xs font-black text-primary-700 dark:text-gold-400 hover:underline"
+            >
+              <span>Đăng ký hội viên ngay</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>

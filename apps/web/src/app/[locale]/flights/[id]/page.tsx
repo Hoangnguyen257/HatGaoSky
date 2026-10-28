@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import { useAuth } from '../../../../context/AuthContext';
 import { api } from '../../../../lib/api';
 import {
   Plane,
@@ -22,6 +23,7 @@ export default function FlightDetailPage() {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
+  const { user } = useAuth();
 
   const [flight, setFlight] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -147,11 +149,14 @@ export default function FlightDetailPage() {
                 </div>
 
                 <button
-                  onClick={() =>
-                    router.push(
-                      `/${locale}/booking?outboundFlightId=${flight.id}&cabinClass=${fare.cabinClass}&passengers=1`,
-                    )
-                  }
+                  onClick={() => {
+                    const bookingTarget = `/${locale}/booking?outboundFlightId=${flight.id}&cabinClass=${fare.cabinClass}&passengers=1`;
+                    if (!user) {
+                      router.push(`/${locale}/auth/login?redirect=${encodeURIComponent(bookingTarget)}`);
+                      return;
+                    }
+                    router.push(bookingTarget);
+                  }}
                   className="w-full mt-3 py-2.5 bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5"
                 >
                   <span>Đặt vé hạng {fare.cabinClass}</span>

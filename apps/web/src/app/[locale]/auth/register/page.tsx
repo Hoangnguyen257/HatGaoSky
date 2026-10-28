@@ -2,24 +2,30 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '../../../../context/AuthContext';
 import { api } from '../../../../lib/api';
-import { Plane, Lock, Mail, User, Phone, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Plane, Lock, Mail, User, Phone, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 
 export default function RegisterPage() {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect');
   const { user } = useAuth();
 
   // If already logged in, redirect away from register page
   useEffect(() => {
     if (user) {
-      router.push(`/${locale}`);
+      if (redirectUrl) {
+        router.push(redirectUrl);
+      } else {
+        router.push(`/${locale}`);
+      }
     }
-  }, [user, router, locale]);
+  }, [user, router, locale, redirectUrl]);
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -36,11 +42,38 @@ export default function RegisterPage() {
     e.preventDefault();
     setError(null);
 
+    if (!fullName.trim()) {
+      setError('Vui lòng nhập họ và tên');
+      return;
+    }
+    if (!email.trim() || !email.includes('@')) {
+      setError('Vui lòng nhập địa chỉ email hợp lệ');
+      return;
+    }
+    if (!phone.trim()) {
+      setError('Vui lòng nhập số điện thoại');
+      return;
+    }
+    if (phone.trim().length < 9) {
+      setError('Số điện thoại không hợp lệ (tối thiểu 9 số)');
+      return;
+    }
+    if (!password) {
+      setError('Vui lòng nhập mật khẩu');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Mật khẩu phải có tối thiểu 6 ký tự');
+      return;
+    }
+    if (!confirmPassword) {
+      setError('Vui lòng xác nhận mật khẩu');
+      return;
+    }
     if (password !== confirmPassword) {
       setError('Mật khẩu xác nhận không khớp');
       return;
     }
-
     if (!agreedTerms) {
       setError('Vui lòng xác nhận đồng ý với Điều khoản dịch vụ và Chính sách hội viên');
       return;
@@ -109,7 +142,7 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Họ và tên đầy đủ *
+                Họ và tên đầy đủ <span className="text-red-500 font-bold">*</span>
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -117,7 +150,12 @@ export default function RegisterPage() {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Nguyen Van A"
+                  onInvalid={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng nhập họ và tên' : '');
+                  }}
+                  onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
+                  placeholder="Nguyễn Văn An"
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none"
                   required
                 />
@@ -126,7 +164,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Email nhận vé & thông báo *
+                Email nhận vé & thông báo <span className="text-red-500 font-bold">*</span>
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -134,7 +172,18 @@ export default function RegisterPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nguyen.van.a@gmail.com"
+                  onInvalid={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (target.validity.valueMissing) {
+                      target.setCustomValidity('Vui lòng nhập địa chỉ email');
+                    } else if (target.validity.typeMismatch) {
+                      target.setCustomValidity('Vui lòng nhập địa chỉ email hợp lệ (ví dụ: name@example.com)');
+                    } else {
+                      target.setCustomValidity('');
+                    }
+                  }}
+                  onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
+                  placeholder="name@example.com"
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none"
                   required
                 />
@@ -143,23 +192,29 @@ export default function RegisterPage() {
 
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Số điện thoại liên hệ
+                Số điện thoại liên hệ <span className="text-red-500 font-bold">*</span>
               </label>
               <div className="relative">
                 <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                 <input
-                  type="text"
+                  type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  onInvalid={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng nhập số điện thoại' : '');
+                  }}
+                  onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                   placeholder="0912345678"
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none"
+                  required
                 />
               </div>
             </div>
 
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Mật khẩu (tối thiểu 6 ký tự) *
+                Mật khẩu (≥ 6 ký tự) <span className="text-red-500 font-bold">*</span>
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -167,15 +222,27 @@ export default function RegisterPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onInvalid={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (target.validity.valueMissing) {
+                      target.setCustomValidity('Vui lòng nhập mật khẩu');
+                    } else if (target.validity.tooShort) {
+                      target.setCustomValidity('Mật khẩu phải có tối thiểu 6 ký tự');
+                    } else {
+                      target.setCustomValidity('');
+                    }
+                  }}
+                  onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none"
                   required
+                  minLength={6}
                 />
               </div>
             </div>
 
             <div>
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
-                Xác nhận mật khẩu *
+                Xác nhận mật khẩu <span className="text-red-500 font-bold">*</span>
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -183,6 +250,11 @@ export default function RegisterPage() {
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  onInvalid={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng xác nhận mật khẩu' : '');
+                  }}
+                  onInput={(e) => (e.target as HTMLInputElement).setCustomValidity('')}
                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs font-semibold focus:outline-none"
                   required
                 />
@@ -194,13 +266,21 @@ export default function RegisterPage() {
                 <input
                   type="checkbox"
                   checked={agreedTerms}
-                  onChange={(e) => setAgreedTerms(e.target.checked)}
+                  onInvalid={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    target.setCustomValidity(target.validity.valueMissing ? 'Vui lòng đồng ý với điều khoản dịch vụ và chính sách hội viên' : '');
+                  }}
+                  onChange={(e) => {
+                    (e.target as HTMLInputElement).setCustomValidity('');
+                    setAgreedTerms(e.target.checked);
+                  }}
                   className="mt-0.5 w-4 h-4 rounded text-primary-600 focus:ring-primary-500 cursor-pointer"
+                  required
                 />
                 <span>
                   Tôi đồng ý với{' '}
                   <span className="font-bold text-primary-600 dark:text-gold-400">Điều khoản dịch vụ</span>{' '}
-                  và <span className="font-bold text-primary-600 dark:text-gold-400">Chính sách hội viên Lotus Club</span> của Hạt Gạo Sky.
+                  và <span className="font-bold text-primary-600 dark:text-gold-400">Chính sách hội viên Lotus Club</span> của Hạt Gạo Sky. <span className="text-red-500 font-bold">*</span>
                 </span>
               </label>
             </div>
@@ -208,7 +288,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs rounded-xl shadow-md transition"
+              className="w-full py-3 bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer"
             >
               {loading ? 'Đang đăng ký...' : 'Tạo tài khoản Hội viên'}
             </button>
@@ -217,7 +297,10 @@ export default function RegisterPage() {
 
         <div className="text-center text-xs text-slate-500">
           Đã có tài khoản?{' '}
-          <Link href={`/${locale}/auth/login`} className="font-bold text-primary-600 hover:underline">
+          <Link
+            href={`/${locale}/auth/login${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`}
+            className="font-bold text-primary-600 hover:underline"
+          >
             Đăng nhập ngay
           </Link>
         </div>
