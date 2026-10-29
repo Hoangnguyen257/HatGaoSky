@@ -29,9 +29,9 @@ export const SeatMap: React.FC<SeatMapProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch seats on mount
-  useEffect(() => {
+  const loadSeats = (isRetry = false) => {
     setLoading(true);
+    setError(null);
     api
       .getFlightSeats(flightId)
       .then((data) => {
@@ -39,9 +39,21 @@ export const SeatMap: React.FC<SeatMapProps> = ({
         setLoading(false);
       })
       .catch((err) => {
+        if (!isRetry) {
+          // Automatic 1x silent retry after 1s in case server was in transient warmup
+          setTimeout(() => loadSeats(true), 1200);
+          return;
+        }
         setError(err.message || 'Không thể tải sơ đồ chỗ ngồi');
         setLoading(false);
       });
+  };
+
+  // Fetch seats on mount
+  useEffect(() => {
+    if (flightId) {
+      loadSeats();
+    }
   }, [flightId]);
 
   // Hold Countdown timer
@@ -107,9 +119,16 @@ export const SeatMap: React.FC<SeatMapProps> = ({
 
   if (error && !seatData) {
     return (
-      <div className="p-6 bg-red-50 dark:bg-red-950/40 rounded-2xl border border-red-200 dark:border-red-800 text-center">
-        <AlertCircle className="w-6 h-6 text-red-600 mx-auto mb-2" />
+      <div className="p-6 bg-red-50 dark:bg-red-950/40 rounded-2xl border border-red-200 dark:border-red-800 text-center space-y-3">
+        <AlertCircle className="w-6 h-6 text-red-600 mx-auto" />
         <p className="text-xs text-red-700 dark:text-red-300 font-semibold">{error}</p>
+        <button
+          type="button"
+          onClick={() => loadSeats(true)}
+          className="px-4 py-2 bg-primary-900 hover:bg-primary-800 text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer"
+        >
+          {t('search.retryNow') || 'Thử lại ngay'}
+        </button>
       </div>
     );
   }
