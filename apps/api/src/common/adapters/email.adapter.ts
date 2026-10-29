@@ -31,6 +31,9 @@ const DEFAULT_SMTP_PASS = Buffer.from('emlzZWxtdGpzbmRqcWF6eg==', 'base64').toSt
 export class ConsoleAndDbEmailAdapter implements EmailAdapter {
   private readonly logger = new Logger('EmailAdapter');
   private transporter: nodemailer.Transporter | null = null;
+  public lastDispatchStatus: string = 'NO_DISPATCH_YET';
+  public lastDispatchError: string | null = null;
+  public lastDispatchTime: string | null = null;
 
   constructor(private readonly prisma: PrismaService) {
     this.initTransporter();
@@ -60,7 +63,7 @@ export class ConsoleAndDbEmailAdapter implements EmailAdapter {
       this.logger.log(`SMTP Transporter configured (${host}:${port}, user: ${user})`);
     } else {
       this.logger.warn(
-        `SMTP credentials not set. Set SMTP_USER and SMTP_PASS or BREVO_API_KEY / RESEND_API_KEY to send real emails.`
+        `SMTP credentials not set. Set SMTP_USER and SMTP_PASS or BREVO_API_KEY to send real emails.`
       );
     }
   }
@@ -94,56 +97,28 @@ export class ConsoleAndDbEmailAdapter implements EmailAdapter {
 
       if (!res.ok) {
         const errText = await res.text();
+        this.lastDispatchStatus = `BREVO_ERROR_${res.status}`;
+        this.lastDispatchError = errText;
         this.logger.error(`❌ [BREVO API ERROR] (${res.status}): ${errText}`);
         return false;
       }
 
       const data = await res.json();
+      this.lastDispatchStatus = 'BREVO_SUCCESS';
+      this.lastDispatchError = null;
       this.logger.log(`✅ [BREVO EMAIL DELIVERED] Sent to ${options.to} (MessageId: ${data.messageId})`);
       return true;
     } catch (err: any) {
-      this.logger.error(`❌ [BREVO API EXCEPTION] ${err.message || String(err)}`);
-      return false;
-    }
-  }
-
-  /**
-   * Send email using HTTP REST API (Resend) over HTTPS Port 443
-   */
-  private async sendViaResend(apiKey: string, options: SendEmailOptions): Promise<boolean> {
-    try {
-      const fromAddress = cleanEnvValue(process.env.RESEND_FROM) || 'Hạt Gạo Sky <onboarding@resend.dev>';
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: fromAddress,
-          to: [options.to],
-          subject: options.subject,
-          html: options.htmlContent,
-        }),
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        this.logger.error(`❌ [RESEND API ERROR] (${res.status}): ${errText}`);
-        return false;
-      }
-
-      const data = await res.json();
-      this.logger.log(`✅ [RESEND EMAIL DELIVERED] Sent to ${options.to} (Id: ${data.id})`);
-      return true;
-    } catch (err: any) {
-      this.logger.error(`❌ [RESEND API EXCEPTION] ${err.message || String(err)}`);
+      this.lastDispatchStatus = 'BREVO_EXCEPTION';
+      this.lastDispatchError = err.message || String(err);
+      this.logger.error(`❌ [BREVO API EXCEPTION] ${this.lastDispatchError}`);
       return false;
     }
   }
 
   async sendEmail(options: SendEmailOptions): Promise<boolean> {
     this.logger.log(`📧 [EMAIL DISPATCH] To: ${options.to} | Subject: "${options.subject}" [Template: ${options.template}]`);
+    this.lastDispatchTime = new Date().toISOString();
 
     let sentReal = false;
     let failureReason: string | null = null;
@@ -158,17 +133,7 @@ export class ConsoleAndDbEmailAdapter implements EmailAdapter {
       }
     }
 
-    // 2. Priority 2: Check Resend API Key (HTTP REST API via HTTPS 443 - 100% works on Render Free)
-    const resendApiKey = cleanEnvValue(process.env.RESEND_API_KEY);
-    if (resendApiKey) {
-      sentReal = await this.sendViaResend(resendApiKey, options);
-      if (sentReal) {
-        await this.recordEmail(options, 'SENT_REAL_RESEND');
-        return true;
-      }
-    }
-
-    // 3. Priority 3: Nodemailer SMTP (Gmail / Custom SMTP)
+    // 2. Priority 2: Nodemailer SMTP (Gmail / Custom SMTP)
     if (!this.transporter) {
       this.initTransporter();
     }
@@ -191,15 +156,14 @@ export class ConsoleAndDbEmailAdapter implements EmailAdapter {
         });
 
         sentReal = true;
+        this.lastDispatchStatus = 'SMTP_SUCCESS';
+        this.lastDispatchError = null;
         this.logger.log(`✅ [SMTP EMAIL DELIVERED] Successfully sent to ${options.to} (MessageId: ${info.messageId})`);
       } catch (err: any) {
         failureReason = err.message || String(err);
+        this.lastDispatchStatus = 'SMTP_FAILED';
+        this.lastDispatchError = failureReason;
         this.logger.error(`❌ [SMTP ERROR] Failed sending to ${options.to}: ${failureReason}`);
-        if (failureReason && (failureReason.includes('ETIMEDOUT') || failureReason.includes('timeout'))) {
-          this.logger.warn(
-            `⚠️ [RENDER FIREWALL NOTICE] Render Free blocks outbound TCP ports 25, 465, and 587. To send real emails from Render, please add a free BREVO_API_KEY (from https://brevo.com) to Render Environment Variables!`
-          );
-        }
       }
     }
 
@@ -221,5 +185,21 @@ export class ConsoleAndDbEmailAdapter implements EmailAdapter {
     } catch (error) {
       this.logger.error(`Failed to record sent email to DB:`, error);
     }
+  }
+
+  getLastDiagnostic() {
+    const brevoKey = cleanEnvValue(process.env.BREVO_API_KEY);
+    return {
+      hasBrevoApiKey: !!brevoKey,
+      brevoApiKeyPrefix: brevoKey ? brevoKey.slice(0, 10) + '...' : 'NOT_SET',
+      senderEmail:
+        cleanEnvValue(process.env.BREVO_SENDER_EMAIL) ||
+        cleanEnvValue(process.env.SMTP_USER) ||
+        DEFAULT_SMTP_USER,
+      smtpConfigured: !!this.transporter,
+      lastDispatchStatus: this.lastDispatchStatus,
+      lastDispatchError: this.lastDispatchError,
+      lastDispatchTime: this.lastDispatchTime,
+    };
   }
 }

@@ -137,12 +137,40 @@ export class BookingsService {
       );
     }
 
-    // 4. Calculate Base Fare & Taxes
-    // Adults & Children pay full/child base fare, Infants pay 10%
-    const baseFareTotal =
-      adultCount * fare.basePrice +
-      childCount * (fare.basePrice * 0.75) +
-      infantCount * (fare.basePrice * 0.1);
+    // Pre-query the requested seats to check existence and dynamically calculate per-passenger fare
+    const preSeats = await this.prisma.seat.findMany({
+      where: {
+        flightId: dto.outboundFlightId,
+        seatNumber: { in: dto.outboundSeats },
+      },
+    });
+
+    if (preSeats.length !== dto.outboundSeats.length) {
+      throw new NotFoundException('Một hoặc nhiều ghế đã chọn không tồn tại');
+    }
+
+    // 4. Calculate Base Fare & Taxes dynamically based on the seat chosen for each passenger
+    let baseFareTotal = 0;
+    let seatIdxFare = 0;
+    for (const p of dto.passengers) {
+      let paxCabin = dto.cabinClass;
+      if (p.passengerType !== 'INFANT' && seatIdxFare < dto.outboundSeats.length) {
+        const seatNum = dto.outboundSeats[seatIdxFare++];
+        const matched = preSeats.find((s) => s.seatNumber === seatNum);
+        if (matched?.cabinClass) {
+          paxCabin = matched.cabinClass;
+        }
+      }
+      const paxFare = flight.fares.find((f) => f.cabinClass === paxCabin) || fare;
+      const base = paxFare.basePrice;
+      if (p.passengerType === 'INFANT') {
+        baseFareTotal += base * 0.1;
+      } else if (p.passengerType === 'CHILD') {
+        baseFareTotal += base * 0.75;
+      } else {
+        baseFareTotal += base;
+      }
+    }
 
     const taxesAndFees = Math.round(baseFareTotal * 0.1 + (adultCount + childCount) * 120000);
 
@@ -265,6 +293,8 @@ export class BookingsService {
         if (p.passengerType !== 'INFANT' && seatIdx < dto.outboundSeats.length) {
           const seatNumber = dto.outboundSeats[seatIdx++];
           const seat = seats.find((s) => s.seatNumber === seatNumber);
+          const paxCabin = seat?.cabinClass || dto.cabinClass;
+          const paxFare = flight.fares.find((f) => f.cabinClass === paxCabin) || fare;
 
           await tx.ticket.create({
             data: {
@@ -272,10 +302,10 @@ export class BookingsService {
               passengerId: pax.id,
               flightId: dto.outboundFlightId,
               seatId: seat?.id || seats[0].id,
-              cabinClass: dto.cabinClass,
+              cabinClass: paxCabin,
               ticketNumber: `738-${Date.now().toString().slice(-6)}${Math.floor(1000 + Math.random() * 9000)}`,
               status: 'ISSUED',
-              price: fare.basePrice,
+              price: paxFare.basePrice,
             },
           });
         }
@@ -814,7 +844,16 @@ export class BookingsService {
       sentViaRealSmtp: sent,
       recipient: emailToSend,
       pnr: booking.pnr,
-      message: `Vé điện tử và Thẻ lên tàu bay đã được gửi thành công đến ${emailToSend}!`,
+      message: sent
+        ? `Vé điện tử và Thẻ lên tàu bay đã được gửi thành công đến ${emailToSend}!`
+        : `Lệnh gửi mail đã hoàn tất. Xem trạng thái gửi thực tế tại /api/bookings/email-diagnostic`,
     };
+  }
+
+  getEmailDiagnostic() {
+    if ('getLastDiagnostic' in this.emailAdapter) {
+      return (this.emailAdapter as any).getLastDiagnostic();
+    }
+    return { message: 'Diagnostics not available' };
   }
 }

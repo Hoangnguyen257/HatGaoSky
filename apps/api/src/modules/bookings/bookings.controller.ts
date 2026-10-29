@@ -73,6 +73,12 @@ export class BookingsController {
     return this.bookingsService.addCheckedBaggage(pnr, dto);
   }
 
+  @Get('email-diagnostic')
+  @ApiOperation({ summary: 'Check live email configuration and last delivery error' })
+  getEmailDiagnostic() {
+    return this.bookingsService.getEmailDiagnostic();
+  }
+
   @Post(':pnr/send-ticket-email')
   @ApiOperation({ summary: 'Send electronic ticket and boarding pass directly to real email' })
   sendTicketEmail(

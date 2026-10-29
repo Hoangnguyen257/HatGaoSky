@@ -79,6 +79,7 @@ export default function BookingWizardPage() {
 
   // Seat Selection State
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
+  const [selectedSeatDetails, setSelectedSeatDetails] = useState<{ seatNumber: string; cabinClass: string }[]>([]);
 
   // Add-on Services State
   const [selectedBaggageWeight, setSelectedBaggageWeight] = useState<number>(0);
@@ -121,13 +122,31 @@ export default function BookingWizardPage() {
       });
   }, [outboundFlightId]);
 
-  // Calculations
-  const fare = flight?.fares?.find((f: any) => f.cabinClass === initialCabinClass) || flight?.fares?.[0];
+  // Calculations: dynamically compute effective cabin class and price based on selected seats
+  const effectiveCabinClass = selectedSeatDetails.length > 0
+    ? (selectedSeatDetails.some((s) => s.cabinClass === 'BUSINESS') ? 'BUSINESS' : 'ECONOMY')
+    : initialCabinClass;
+
+  const fare = flight?.fares?.find((f: any) => f.cabinClass === effectiveCabinClass) || flight?.fares?.[0];
   const basePricePerPax = fare?.basePrice || 1450000;
+
+  let nonInfantCounter = 0;
   const baseFareTotal = passengers.reduce((sum, p) => {
-    if (p.passengerType === 'INFANT') return sum + basePricePerPax * 0.1;
-    if (p.passengerType === 'CHILD') return sum + basePricePerPax * 0.75;
-    return sum + basePricePerPax;
+    let paxCabinClass = initialCabinClass;
+    if (p.passengerType !== 'INFANT') {
+      const assigned = selectedSeatDetails[nonInfantCounter++];
+      if (assigned?.cabinClass) {
+        paxCabinClass = assigned.cabinClass;
+      } else {
+        paxCabinClass = effectiveCabinClass;
+      }
+    }
+    const paxFare = flight?.fares?.find((f: any) => f.cabinClass === paxCabinClass) || fare;
+    const price = paxFare?.basePrice || basePricePerPax;
+
+    if (p.passengerType === 'INFANT') return sum + price * 0.1;
+    if (p.passengerType === 'CHILD') return sum + price * 0.75;
+    return sum + price;
   }, 0);
 
   const taxesAndFees = Math.round(baseFareTotal * 0.1 + passengers.length * 120000);
@@ -155,7 +174,7 @@ export default function BookingWizardPage() {
       const res = await api.validateDiscount({
         code: promoCodeInput.trim(),
         bookingAmount: baseFareTotal,
-        cabinClass: initialCabinClass,
+        cabinClass: effectiveCabinClass,
       });
       setAppliedDiscount(res);
     } catch (err: any) {
@@ -232,7 +251,7 @@ export default function BookingWizardPage() {
       // 2. Create Booking
       const bookingData = await api.createBooking({
         outboundFlightId,
-        cabinClass: initialCabinClass,
+        cabinClass: effectiveCabinClass,
         sessionId,
         contactEmail,
         contactPhone,
@@ -709,10 +728,13 @@ export default function BookingWizardPage() {
             <div className="space-y-6">
               <SeatMap
                 flightId={outboundFlightId}
-                cabinClass={initialCabinClass}
+                cabinClass={effectiveCabinClass}
                 requiredSeatsCount={passengers.filter((p) => p.passengerType !== 'INFANT').length}
                 sessionId={sessionId}
-                onSeatsSelected={(seats) => setSelectedSeats(seats)}
+                onSeatsSelected={(seats, details) => {
+                  setSelectedSeats(seats);
+                  if (details) setSelectedSeatDetails(details);
+                }}
                 initialSelectedSeats={selectedSeats}
               />
 
@@ -1325,7 +1347,7 @@ export default function BookingWizardPage() {
                         key={idx}
                         ticket={{
                           ticketNumber: `738-${Date.now().toString().slice(-6)}${1000 + idx}`,
-                          cabinClass: initialCabinClass,
+                          cabinClass: effectiveCabinClass,
                           status: 'ISSUED',
                           seat: {
                             seatNumber: selectedSeats[idx] || (idx === 0 ? '12A' : `${12 + idx}B`),
@@ -1369,7 +1391,12 @@ export default function BookingWizardPage() {
 
               <div className="space-y-2.5 text-xs">
                 <div className="flex justify-between text-slate-600 dark:text-slate-400">
-                  <span>{t('booking.baseFare')} ({passengers.length} pax)</span>
+                  <div>
+                    <span>{t('booking.baseFare')} ({passengers.length} pax)</span>
+                    <span className="block text-[11px] font-bold text-primary-700 dark:text-gold-400">
+                      {effectiveCabinClass === 'BUSINESS' ? 'Khoang Thương gia (Business)' : 'Khoang Phổ thông (Economy)'}
+                    </span>
+                  </div>
                   <span className="font-bold text-slate-900 dark:text-white">
                     {baseFareTotal.toLocaleString('vi-VN')} VND
                   </span>

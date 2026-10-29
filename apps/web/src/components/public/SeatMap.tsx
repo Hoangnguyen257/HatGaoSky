@@ -10,7 +10,7 @@ interface SeatMapProps {
   cabinClass: string;
   requiredSeatsCount: number;
   sessionId: string;
-  onSeatsSelected: (seats: string[]) => void;
+  onSeatsSelected: (seats: string[], seatDetails?: { seatNumber: string; cabinClass: string }[]) => void;
   initialSelectedSeats?: string[];
 }
 
@@ -105,7 +105,15 @@ export const SeatMap: React.FC<SeatMapProps> = ({
     }
 
     setSelectedSeats(newSelected);
-    onSeatsSelected(newSelected);
+    const allSeats: any[] = seatData?.seats || [];
+    const newSelectedDetails = newSelected.map((num) => {
+      const found = allSeats.find((s: any) => s.seatNumber === num);
+      return {
+        seatNumber: num,
+        cabinClass: (found?.cabinClass || 'ECONOMY') as string,
+      };
+    });
+    onSeatsSelected(newSelected, newSelectedDetails);
   };
 
   if (loading) {
