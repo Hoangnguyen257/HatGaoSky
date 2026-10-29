@@ -71,39 +71,25 @@ export const SeatMap: React.FC<SeatMapProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleSeatClick = async (seat: any) => {
+  const holdTimeoutRef = React.useRef<any>(null);
+
+  const handleSeatClick = (seat: any) => {
     if (seat.status === 'BOOKED') return;
     if (seat.status === 'HELD' && seat.heldBySessionId !== sessionId) return;
 
     let newSelected: string[];
     if (selectedSeats.includes(seat.seatNumber)) {
       newSelected = selectedSeats.filter((s) => s !== seat.seatNumber);
-      // Release seat
-      api.releaseSeats({ flightId, seatNumbers: [seat.seatNumber], sessionId }).catch(() => {});
     } else {
       if (selectedSeats.length >= requiredSeatsCount) {
-        // Replace oldest or alert
-        const oldest = selectedSeats[0];
-        api.releaseSeats({ flightId, seatNumbers: [oldest], sessionId }).catch(() => {});
+        // Keep most recently chosen seats up to requiredSeatsCount
         newSelected = [...selectedSeats.slice(1), seat.seatNumber];
       } else {
         newSelected = [...selectedSeats, seat.seatNumber];
       }
-
-      // Trigger atomic hold on server
-      try {
-        const holdRes = await api.holdSeats({
-          flightId,
-          seatNumbers: newSelected,
-          sessionId,
-        });
-        setHoldTtlSeconds(holdRes.ttlSeconds || 900);
-      } catch (e: any) {
-        setError(e.message || 'Ghế đã có người giữ chỗ');
-        return;
-      }
     }
 
+    // 1. Optimistically update local state & parent callback immediately (0ms delay, instantaneous price update)
     setSelectedSeats(newSelected);
     const allSeats: any[] = seatData?.seats || [];
     const newSelectedDetails = newSelected.map((num) => {
@@ -114,6 +100,31 @@ export const SeatMap: React.FC<SeatMapProps> = ({
       };
     });
     onSeatsSelected(newSelected, newSelectedDetails);
+
+    // 2. Debounce server hold call by 300ms so rapid clicking never floods SQLite with overlapping transactions
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current);
+    }
+
+    holdTimeoutRef.current = setTimeout(async () => {
+      if (newSelected.length > 0) {
+        try {
+          const holdRes = await api.holdSeats({
+            flightId,
+            seatNumbers: newSelected,
+            sessionId,
+          });
+          if (holdRes?.ttlSeconds) {
+            setHoldTtlSeconds(holdRes.ttlSeconds);
+          }
+          setError(null);
+        } catch (e: any) {
+          console.warn('Hold seats notice:', e.message);
+        }
+      } else {
+        api.releaseSeats({ flightId, seatNumbers: selectedSeats, sessionId }).catch(() => {});
+      }
+    }, 300);
   };
 
   if (loading) {
