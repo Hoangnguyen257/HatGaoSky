@@ -130,6 +130,11 @@ export class ConsoleAndDbEmailAdapter implements EmailAdapter {
       if (sentReal) {
         await this.recordEmail(options, 'SENT_REAL_BREVO');
         return true;
+      } else {
+        // When Brevo API key is present, do NOT fall back to SMTP!
+        // Render Free blocks SMTP ports (25, 465, 587), causing a 5s connection timeout that overwrites Brevo's real error.
+        await this.recordEmail(options, 'FAILED_BREVO');
+        return false;
       }
     }
 

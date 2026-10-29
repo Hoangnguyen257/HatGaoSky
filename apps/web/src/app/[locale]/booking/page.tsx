@@ -80,6 +80,8 @@ export default function BookingWizardPage() {
   // Seat Selection State
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
   const [selectedSeatDetails, setSelectedSeatDetails] = useState<{ seatNumber: string; cabinClass: string }[]>([]);
+  // User chosen cabin class (can be explicitly toggled or auto-updated when clicking a seat)
+  const [userCabinClass, setUserCabinClass] = useState<string>(initialCabinClass);
 
   // Add-on Services State
   const [selectedBaggageWeight, setSelectedBaggageWeight] = useState<number>(0);
@@ -122,17 +124,18 @@ export default function BookingWizardPage() {
       });
   }, [outboundFlightId]);
 
-  // Calculations: dynamically compute effective cabin class and price based on selected seats
+  // Calculations: dynamically compute effective cabin class and price based on selected seats or user choice
   const effectiveCabinClass = selectedSeatDetails.length > 0
     ? (selectedSeatDetails.some((s) => s.cabinClass === 'BUSINESS') ? 'BUSINESS' : 'ECONOMY')
-    : initialCabinClass;
+    : userCabinClass;
 
   const fare = flight?.fares?.find((f: any) => f.cabinClass === effectiveCabinClass) || flight?.fares?.[0];
-  const basePricePerPax = fare?.basePrice || 1450000;
+  const defaultBasePrice = effectiveCabinClass === 'BUSINESS' ? 4200000 : 1450000;
+  const basePricePerPax = fare?.basePrice || defaultBasePrice;
 
   let nonInfantCounter = 0;
   const baseFareTotal = passengers.reduce((sum, p) => {
-    let paxCabinClass = initialCabinClass;
+    let paxCabinClass = userCabinClass;
     if (p.passengerType !== 'INFANT') {
       const assigned = selectedSeatDetails[nonInfantCounter++];
       if (assigned?.cabinClass) {
@@ -142,7 +145,8 @@ export default function BookingWizardPage() {
       }
     }
     const paxFare = flight?.fares?.find((f: any) => f.cabinClass === paxCabinClass) || fare;
-    const price = paxFare?.basePrice || basePricePerPax;
+    const defaultPaxPrice = paxCabinClass === 'BUSINESS' ? 4200000 : 1450000;
+    const price = paxFare?.basePrice || defaultPaxPrice;
 
     if (p.passengerType === 'INFANT') return sum + price * 0.1;
     if (p.passengerType === 'CHILD') return sum + price * 0.75;
@@ -424,6 +428,48 @@ export default function BookingWizardPage() {
                 <p className="text-xs text-slate-500 mt-1">
                   Vui lòng nhập chính xác họ tên và thông tin như trên giấy tờ tùy thân.
                 </p>
+              </div>
+
+              {/* Cabin Class Selection Banner */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary-600" />
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Hạng vé đang chọn:
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserCabinClass('ECONOMY');
+                      setSelectedSeats([]);
+                      setSelectedSeatDetails([]);
+                    }}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      effectiveCabinClass === 'ECONOMY'
+                        ? 'bg-primary-900 text-white shadow-sm ring-2 ring-primary-500'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    Khoang Phổ thông (Economy) · {flight?.fares?.find((f: any) => f.cabinClass === 'ECONOMY')?.basePrice?.toLocaleString('vi-VN') || '1.450.000'} VND
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserCabinClass('BUSINESS');
+                      setSelectedSeats([]);
+                      setSelectedSeatDetails([]);
+                    }}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                      effectiveCabinClass === 'BUSINESS'
+                        ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-400'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    ✨ Khoang Thương gia (Business) · {flight?.fares?.find((f: any) => f.cabinClass === 'BUSINESS')?.basePrice?.toLocaleString('vi-VN') || '4.200.000'} VND
+                  </button>
+                </div>
               </div>
 
               {!user && (
@@ -726,6 +772,53 @@ export default function BookingWizardPage() {
           {/* STEP 2: SEATS SELECTION */}
           {step === 2 && (
             <div className="space-y-6">
+              {/* Step 2 Cabin Class Toggle */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <span className="font-bold text-slate-700 dark:text-slate-300">
+                  Hạng vé áp dụng:{' '}
+                  <strong className="text-primary-700 dark:text-gold-400 font-extrabold">
+                    {effectiveCabinClass === 'BUSINESS' ? 'Khoang Thương gia (Business)' : 'Khoang Phổ thông (Economy)'}
+                  </strong>
+                  {selectedSeatDetails.length > 0 && (
+                    <span className="text-slate-500 font-normal ml-2">
+                      (Đã tự động đổi giá theo ghế {selectedSeats.join(', ')})
+                    </span>
+                  )}
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserCabinClass('ECONOMY');
+                      setSelectedSeats([]);
+                      setSelectedSeatDetails([]);
+                    }}
+                    className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
+                      effectiveCabinClass === 'ECONOMY'
+                        ? 'bg-primary-900 text-white shadow-sm ring-2 ring-primary-500'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600'
+                    }`}
+                  >
+                    Chọn vé Phổ thông (1.450.000 VND)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUserCabinClass('BUSINESS');
+                      setSelectedSeats([]);
+                      setSelectedSeatDetails([]);
+                    }}
+                    className={`px-3 py-1 rounded-lg font-bold transition cursor-pointer ${
+                      effectiveCabinClass === 'BUSINESS'
+                        ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-400'
+                        : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600'
+                    }`}
+                  >
+                    ✨ Chọn vé Thương gia (4.200.000 VND)
+                  </button>
+                </div>
+              </div>
+
               <SeatMap
                 flightId={outboundFlightId}
                 cabinClass={effectiveCabinClass}
@@ -733,7 +826,13 @@ export default function BookingWizardPage() {
                 sessionId={sessionId}
                 onSeatsSelected={(seats, details) => {
                   setSelectedSeats(seats);
-                  if (details) setSelectedSeatDetails(details);
+                  if (details && details.length > 0) {
+                    setSelectedSeatDetails(details);
+                    const hasBusiness = details.some((d) => d.cabinClass === 'BUSINESS');
+                    setUserCabinClass(hasBusiness ? 'BUSINESS' : 'ECONOMY');
+                  } else {
+                    setSelectedSeatDetails([]);
+                  }
                 }}
                 initialSelectedSeats={selectedSeats}
               />
@@ -915,7 +1014,7 @@ export default function BookingWizardPage() {
                     Chuyến bay: {flight?.flightNumber} ({flight?.aircraft?.model})
                   </span>
                   <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold">
-                    Hạng {initialCabinClass}
+                    Hạng {effectiveCabinClass === 'BUSINESS' ? 'Thương gia (Business)' : 'Phổ thông (Economy)'}
                   </span>
                 </div>
                 <div className="flex items-center gap-4 text-slate-700 dark:text-slate-300">

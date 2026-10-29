@@ -856,4 +856,26 @@ export class BookingsService {
     }
     return { message: 'Diagnostics not available' };
   }
+
+  async sendTestEmail(toEmail?: string) {
+    const target = toEmail || process.env.BREVO_SENDER_EMAIL || 'fukk223345@gmail.com';
+    const sent = await this.emailAdapter.sendEmail({
+      to: target,
+      subject: '[VietSky Test] Kiểm tra gửi email hệ thống',
+      template: 'test',
+      htmlContent: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b;">
+          <h2 style="color: #0f172a;">✈️ VietSky Airlines - Email Test</h2>
+          <p>Chúc mừng! Hệ thống Brevo đã kết nối thành công với tài khoản của bạn.</p>
+          <p><strong>Thời gian:</strong> ${new Date().toLocaleString('vi-VN')}</p>
+          <p><strong>Người nhận:</strong> ${target}</p>
+        </div>
+      `,
+    });
+    return {
+      success: sent,
+      recipient: target,
+      diagnostic: this.getEmailDiagnostic(),
+    };
+  }
 }

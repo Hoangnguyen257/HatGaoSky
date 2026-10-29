@@ -94,9 +94,10 @@ export const SeatMap: React.FC<SeatMapProps> = ({
     const allSeats: any[] = seatData?.seats || [];
     const newSelectedDetails = newSelected.map((num) => {
       const found = allSeats.find((s: any) => s.seatNumber === num);
+      const cabin = (num === seat.seatNumber ? seat.cabinClass : found?.cabinClass) || 'ECONOMY';
       return {
         seatNumber: num,
-        cabinClass: (found?.cabinClass || 'ECONOMY') as string,
+        cabinClass: cabin as string,
       };
     });
     onSeatsSelected(newSelected, newSelectedDetails);

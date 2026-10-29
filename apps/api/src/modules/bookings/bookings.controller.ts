@@ -79,6 +79,12 @@ export class BookingsController {
     return this.bookingsService.getEmailDiagnostic();
   }
 
+  @Get('test-email')
+  @ApiOperation({ summary: 'Test sending an email to verify Brevo / SMTP delivery' })
+  sendTestEmail(@Query('to') to?: string) {
+    return this.bookingsService.sendTestEmail(to);
+  }
+
   @Post(':pnr/send-ticket-email')
   @ApiOperation({ summary: 'Send electronic ticket and boarding pass directly to real email' })
   sendTicketEmail(
