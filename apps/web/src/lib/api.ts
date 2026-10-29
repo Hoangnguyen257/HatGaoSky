@@ -48,11 +48,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   const res = await fetch(`${API_BASE}${endpoint}`, {
     cache: 'no-store',
     ...options,
-    headers: {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      ...headers,
-    },
+    headers,
   });
 
   const data = await res.json().catch(() => ({}));
