@@ -48,9 +48,7 @@ export class SeatsService {
 
     const seatIdsToRelease: string[] = [];
     for (const s of bookedSeats) {
-      if (s.tickets.length === 0) {
-        seatIdsToRelease.push(s.id);
-      } else {
+      if (s.tickets.length > 0) {
         const hasActiveBooking = s.tickets.some(
           (t) => t.booking && t.booking.status !== 'CANCELLED' && t.booking.status !== 'EXPIRED',
         );

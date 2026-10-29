@@ -46,8 +46,13 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   }
 
   const res = await fetch(`${API_BASE}${endpoint}`, {
+    cache: 'no-store',
     ...options,
-    headers,
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      ...headers,
+    },
   });
 
   const data = await res.json().catch(() => ({}));
@@ -91,7 +96,10 @@ export const api = {
   removeFlight: (id: string) => request<any>(`/flights/${id}`, { method: 'DELETE' }),
 
   // Seats
-  getFlightSeats: (flightId: string) => request<any>(`/seats/flight/${flightId}`),
+  getFlightSeats: (flightId: string) => {
+    const sep = flightId.includes('?') ? '&' : '?';
+    return request<any>(`/seats/flight/${flightId}${sep}_t=${Date.now()}`);
+  },
   holdSeats: (body: any) => request<any>('/seats/hold', { method: 'POST', body: JSON.stringify(body) }),
   releaseSeats: (body: any) => request<any>('/seats/release', { method: 'POST', body: JSON.stringify(body) }),
 

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Header } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SeatsService } from './seats.service';
 import { HoldSeatsDto, ReleaseSeatsDto } from './dto/seat.dto';
@@ -9,6 +9,7 @@ export class SeatsController {
   constructor(private readonly seatsService: SeatsService) {}
 
   @Get('flight/:flightId')
+  @Header('Cache-Control', 'no-cache, no-store, must-revalidate')
   @ApiOperation({ summary: 'Get seat map layout and availability for a flight' })
   getFlightSeats(@Param('flightId') flightId: string) {
     return this.seatsService.getFlightSeats(flightId);

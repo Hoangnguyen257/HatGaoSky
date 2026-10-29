@@ -281,6 +281,19 @@ export class BookingsService {
         }
       }
 
+      // Atomically mark the assigned seats as BOOKED so they disappear from seat selection for other users immediately
+      await tx.seat.updateMany({
+        where: {
+          flightId: dto.outboundFlightId,
+          seatNumber: { in: dto.outboundSeats },
+        },
+        data: {
+          status: 'BOOKED',
+          heldUntil: null,
+          heldBySessionId: null,
+        },
+      });
+
       // Create Additional Services
       for (const s of combinedServices) {
         await tx.bookingService.create({

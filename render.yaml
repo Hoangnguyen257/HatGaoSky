@@ -31,5 +31,7 @@ services:
       - key: SMTP_SECURE
         value: "false"
       - key: SMTP_FROM
-        value: "\"Hạt Gạo Sky\" <fukk223345@gmail.com>"
+        value: "Hạt Gạo Sky <fukk223345@gmail.com>"
+      - key: BREVO_API_KEY
+        sync: false
 
