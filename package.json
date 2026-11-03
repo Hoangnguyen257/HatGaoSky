@@ -10,6 +10,7 @@
     "dev": "concurrently -n \"API,WEB\" -c \"bgBlue.bold,bgGreen.bold\" \"npm run dev:api\" \"npm run dev:web\"",
     "dev:api": "npm run start:dev --workspace=apps/api",
     "dev:web": "npm run dev --workspace=apps/web",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
     "build": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",
     "seed": "npm run prisma:seed --workspace=apps/api",
     "test:api": "npm run test --workspace=apps/api",
