@@ -20,10 +20,16 @@ out
 # Local SQLite databases
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 dev.db
 dev.db-journal
+dev.db-shm
+dev.db-wal
 apps/api/dev.db
 apps/api/dev.db-journal
+apps/api/dev.db-shm
+apps/api/dev.db-wal
 
 # Logs
 logs

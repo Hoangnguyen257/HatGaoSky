@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '../../../context/AuthContext';
@@ -81,7 +81,77 @@ export default function SearchResultsPage() {
 
   useEffect(() => {
     fetchResults();
-  }, [origin, destination, departureDate, returnDate, passengers, cabinClass, timeOfDay, sortBy]);
+  }, [origin, destination, departureDate, returnDate, passengers, cabinClass]);
+
+  // Local instant filter & sort helper (0ms reactive client-side update)
+  const getFlightHour = (departureTime: string | Date) => {
+    try {
+      const d = new Date(departureTime);
+      const vnHourStr = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Ho_Chi_Minh',
+        hour: 'numeric',
+        hour12: false,
+      }).format(d);
+      const h = parseInt(vnHourStr, 10);
+      return h === 24 ? 0 : h;
+    } catch {
+      return new Date(departureTime).getHours();
+    }
+  };
+
+  const filterAndSortFlights = (flights: any[]) => {
+    if (!flights || !Array.isArray(flights)) return [];
+    let list = [...flights];
+
+    // Filter by time of day (Vietnam local time)
+    if (timeOfDay) {
+      list = list.filter((f) => {
+        const hour = getFlightHour(f.departureTime);
+        if (timeOfDay === 'MORNING') return hour < 12;
+        if (timeOfDay === 'AFTERNOON') return hour >= 12 && hour < 18;
+        if (timeOfDay === 'EVENING') return hour >= 18;
+        return true;
+      });
+    }
+
+    // Filter by price range
+    if (minPrice || maxPrice) {
+      list = list.filter((f) => {
+        if (!f.fares || f.fares.length === 0) return true;
+        const lowestFare = Math.min(...f.fares.map((fa: any) => fa.basePrice));
+        if (minPrice && lowestFare < minPrice) return false;
+        if (maxPrice && lowestFare > maxPrice) return false;
+        return true;
+      });
+    }
+
+    // Sort flights
+    if (sortBy) {
+      list.sort((a, b) => {
+        const lowestA = Math.min(...(a.fares?.map((fa: any) => fa.basePrice) || [0]));
+        const lowestB = Math.min(...(b.fares?.map((fa: any) => fa.basePrice) || [0]));
+
+        if (sortBy === 'PRICE_ASC') return lowestA - lowestB;
+        if (sortBy === 'PRICE_DESC') return lowestB - lowestA;
+        if (sortBy === 'DURATION_ASC') return a.durationMinutes - b.durationMinutes;
+        if (sortBy === 'DEPARTURE_ASC')
+          return new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime();
+        return 0;
+      });
+    }
+
+    return list;
+  };
+
+  const displayedOutboundFlights = useMemo(
+    () => filterAndSortFlights(searchResult?.outboundFlights || []),
+    [searchResult?.outboundFlights, timeOfDay, minPrice, maxPrice, sortBy],
+  );
+
+  const displayedReturnFlights = useMemo(
+    () => filterAndSortFlights(searchResult?.returnFlights || []),
+    [searchResult?.returnFlights, timeOfDay, minPrice, maxPrice, sortBy],
+  );
 
   const handleToggleCompare = (flight: any) => {
     if (compareList.some((f) => f.id === flight.id)) {
@@ -303,16 +373,38 @@ export default function SearchResultsPage() {
                 {t('search.backHomeSelectDate')}
               </button>
             </div>
+          ) : displayedOutboundFlights.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 border border-slate-100 dark:border-slate-800 text-center shadow-sm space-y-4">
+              <SlidersHorizontal className="w-12 h-12 text-amber-500 mx-auto" />
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">
+                Không tìm thấy chuyến bay phù hợp với bộ lọc
+              </h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto">
+                Không có chuyến bay nào trong khung giờ hoặc mức giá bạn đã chọn. Vui lòng chọn khung giờ khác hoặc đặt lại bộ lọc.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setTimeOfDay('');
+                  setMinPrice(500000);
+                  setMaxPrice(15000000);
+                  setSortBy('PRICE_ASC');
+                }}
+                className="px-6 py-2.5 rounded-xl bg-primary-900 hover:bg-primary-800 text-white font-bold text-xs cursor-pointer shadow-sm"
+              >
+                {t('search.resetFilter')}
+              </button>
+            </div>
           ) : (
             <div className="space-y-6">
               {/* Outbound Flights Section */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
                   <span>
-                    {t('search.outboundTitle', { count: searchResult.outboundFlights.length })}
+                    {t('search.outboundTitle', { count: displayedOutboundFlights.length })}
                   </span>
                 </div>
-                {searchResult.outboundFlights.map((flight: any) => (
+                {displayedOutboundFlights.map((flight: any) => (
                   <FlightCard
                     key={flight.id}
                     flight={flight}
@@ -324,18 +416,18 @@ export default function SearchResultsPage() {
               </div>
 
               {/* Return Flights Section (if round-trip) */}
-              {searchResult.isRoundTrip && searchResult.returnFlights?.length > 0 && (
+              {searchResult.isRoundTrip && displayedReturnFlights?.length > 0 && (
                 <div className="space-y-3 pt-6 border-t border-slate-200 dark:border-slate-800">
                   <div className="flex items-center justify-between text-xs font-semibold text-slate-500">
                     <span>
                       {t('search.returnTitle', {
                         origin: destination,
                         destination: origin,
-                        count: searchResult.returnFlights.length,
+                        count: displayedReturnFlights.length,
                       })}
                     </span>
                   </div>
-                  {searchResult.returnFlights.map((flight: any) => (
+                  {displayedReturnFlights.map((flight: any) => (
                     <FlightCard
                       key={flight.id}
                       flight={flight}

@@ -41,7 +41,7 @@ export class FlightsService {
       throw new BadRequestException('Ngày khởi hành không hợp lệ');
     }
 
-    const cacheKey = `flights:${dto.origin}:${dto.destination}:${dto.departureDate}:${dto.cabinClass || 'ALL'}:${dto.passengers}`;
+    const cacheKey = `flights:${dto.origin}:${dto.destination}:${dto.departureDate}:${dto.cabinClass || 'ALL'}:${dto.passengers}:${dto.timeOfDay || 'ALL'}:${dto.sortBy || 'DEF'}:${dto.minPrice || 0}:${dto.maxPrice || 0}`;
     const cached = await this.cacheAdapter.get(cacheKey);
     if (cached) {
       return cached;
@@ -49,18 +49,17 @@ export class FlightsService {
 
     // Helper to query flights for a route and date
     const queryOneWay = async (originCode: string, destCode: string, dateStr: string) => {
-      const startOfDay = new Date(dateStr);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(dateStr);
-      endOfDay.setHours(23, 59, 59, 999);
+      // In Vietnam time (UTC+7), date boundaries
+      const startOfDay = new Date(`${dateStr}T00:00:00+07:00`);
+      const endOfDay = new Date(`${dateStr}T23:59:59.999+07:00`);
 
       const flights = await this.prisma.flight.findMany({
         where: {
           originAirport: { code: originCode.toUpperCase() },
           destinationAirport: { code: destCode.toUpperCase() },
           departureTime: {
-            gte: startOfDay,
-            lte: endOfDay,
+            gte: isNaN(startOfDay.getTime()) ? undefined : startOfDay,
+            lte: isNaN(endOfDay.getTime()) ? undefined : endOfDay,
           },
           isDisabled: false,
           status: { notIn: ['CANCELLED'] },
@@ -105,10 +104,26 @@ export class FlightsService {
         );
       }
 
+      // Helper to compute local Vietnam hour (UTC+7)
+      const getVnHour = (dateInput: Date | string) => {
+        try {
+          const d = new Date(dateInput);
+          const vnHourStr = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Asia/Ho_Chi_Minh',
+            hour: 'numeric',
+            hour12: false,
+          }).format(d);
+          const h = parseInt(vnHourStr, 10);
+          return h === 24 ? 0 : h;
+        } catch {
+          return new Date(dateInput).getHours();
+        }
+      };
+
       // Apply timeOfDay filter
       if (dto.timeOfDay) {
         results = results.filter((f) => {
-          const hour = new Date(f.departureTime).getHours();
+          const hour = getVnHour(f.departureTime);
           if (dto.timeOfDay === 'MORNING') return hour < 12;
           if (dto.timeOfDay === 'AFTERNOON') return hour >= 12 && hour < 18;
           if (dto.timeOfDay === 'EVENING') return hour >= 18;
