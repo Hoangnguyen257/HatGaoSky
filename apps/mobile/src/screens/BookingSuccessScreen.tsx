@@ -177,3 +177,4 @@ const styles = StyleSheet.create({
     color: COLORS.slate700,
   },
 });
+

@@ -63,3 +63,4 @@ Hệ thống tích hợp sẵn nút chuyển quyền 1-chạm (Quick Role Switch
 | **Nhân viên** | `staff@vietsky.vn` | `Staff@123456` | Xử lý yêu cầu hoàn vé, kiểm tra danh sách bay |
 | **Quản lý** | `manager@vietsky.vn` | `Manager@123456` | Xem KPI doanh thu, điều hành chuyến bay |
 | **Quản trị viên** | `admin@vietsky.vn` | `Admin@123456` | Toàn quyền kiểm soát hệ thống |
+
