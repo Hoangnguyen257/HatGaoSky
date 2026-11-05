@@ -13,6 +13,7 @@
     "dev:mobile": "npm run start --workspace=apps/mobile",
     "build": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",
     "seed": "npm run prisma:seed --workspace=apps/api",
+    "db:studio": "npx prisma studio --schema=apps/api/prisma/schema.prisma",
     "test:api": "npm run test --workspace=apps/api",
     "test:e2e": "node test-e2e.js"
   },
