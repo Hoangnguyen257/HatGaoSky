@@ -259,102 +259,117 @@ export class FlightsService {
   }
 
   async createFlight(dto: CreateFlightDto) {
-    const dep = new Date(dto.departureTime);
-    const arr = new Date(dto.arrivalTime);
+    try {
+      const dep = new Date(dto.departureTime);
+      const arr = new Date(dto.arrivalTime);
 
-    if (dep <= new Date()) {
-      throw new BadRequestException('Thời gian khởi hành phải ở tương lai');
-    }
-    if (arr <= dep) {
-      throw new BadRequestException('Thời gian hạ cánh phải sau thời gian cất cánh');
-    }
-    if (dto.originAirportId === dto.destinationAirportId) {
-      throw new BadRequestException('Sân bay khởi hành và sân bay đến không được giống nhau');
-    }
+      if (dep <= new Date()) {
+        throw new BadRequestException('Thời gian khởi hành phải ở tương lai');
+      }
+      if (arr <= dep) {
+        throw new BadRequestException('Thời gian hạ cánh phải sau thời gian cất cánh');
+      }
+      if (dto.originAirportId === dto.destinationAirportId) {
+        throw new BadRequestException('Sân bay khởi hành và sân bay đến không được giống nhau');
+      }
 
-    // Aircraft Conflict Check: aircraft must not be double-booked
-    const conflict = await this.prisma.flight.findFirst({
-      where: {
-        aircraftId: dto.aircraftId,
-        isDisabled: false,
-        status: { notIn: ['CANCELLED'] },
-        OR: [
-          {
-            departureTime: { lte: arr },
-            arrivalTime: { gte: dep },
-          },
-        ],
-      },
-    });
-
-    if (conflict) {
-      throw new ConflictException(
-        `Máy bay này đã được xếp lịch cho chuyến bay ${conflict.flightNumber} trong khung giờ này`,
-      );
-    }
-
-    const aircraft = await this.prisma.aircraft.findUnique({
-      where: { id: dto.aircraftId },
-    });
-    if (!aircraft) {
-      throw new NotFoundException('Máy bay không tồn tại');
-    }
-
-    const flight = await this.prisma.flight.create({
-      data: {
-        flightNumber: dto.flightNumber,
-        aircraftId: dto.aircraftId,
-        originAirportId: dto.originAirportId,
-        destinationAirportId: dto.destinationAirportId,
-        departureTime: dep,
-        arrivalTime: arr,
-        durationMinutes: dto.durationMinutes,
-        fares: {
-          create: dto.fares.map((f) => ({
-            cabinClass: f.cabinClass,
-            basePrice: f.basePrice,
-            availableSeats: f.availableSeats,
-            baggageAllowanceKg: f.baggageAllowanceKg || 20,
-            cabinBaggageKg: f.cabinBaggageKg || 7,
-            refundFee: f.refundFee || 300000,
-            changeFee: f.changeFee || 200000,
-          })),
+      // Aircraft Conflict Check: aircraft must not be double-booked
+      const conflict = await this.prisma.flight.findFirst({
+        where: {
+          aircraftId: dto.aircraftId,
+          isDisabled: false,
+          status: { notIn: ['CANCELLED'] },
+          OR: [
+            {
+              departureTime: { lte: arr },
+              arrivalTime: { gte: dep },
+            },
+          ],
         },
-      },
-      include: { fares: true },
-    });
+      });
 
-    // Auto-generate seats for this flight
-    const seatsToInsert = [];
-    for (let r = 1; r <= 3; r++) {
-      for (const col of ['A', 'C', 'D', 'G']) {
-        seatsToInsert.push({
-          aircraftId: dto.aircraftId,
-          flightId: flight.id,
-          seatNumber: `${r}${col}`,
-          cabinClass: 'BUSINESS',
-          row: r,
-          col,
-          status: 'AVAILABLE',
-        });
+      if (conflict) {
+        throw new ConflictException(
+          `Máy bay này đã được xếp lịch cho chuyến bay ${conflict.flightNumber} trong khung giờ này`,
+        );
       }
-    }
-    for (let r = 10; r <= 20; r++) {
-      for (const col of ['A', 'B', 'C', 'D', 'E', 'F']) {
-        seatsToInsert.push({
-          aircraftId: dto.aircraftId,
-          flightId: flight.id,
-          seatNumber: `${r}${col}`,
-          cabinClass: 'ECONOMY',
-          row: r,
-          col,
-          status: 'AVAILABLE',
-        });
-      }
-    }
-    await this.prisma.seat.createMany({ data: seatsToInsert });
 
-    return flight;
+      const aircraft = await this.prisma.aircraft.findUnique({
+        where: { id: dto.aircraftId },
+      });
+      if (!aircraft) {
+        throw new NotFoundException('Máy bay không tồn tại');
+      }
+
+      const rawFares = dto.fares && Array.isArray(dto.fares) && dto.fares.length > 0
+        ? dto.fares
+        : [
+            { cabinClass: 'ECONOMY', basePrice: 1500000, availableSeats: 150 },
+            { cabinClass: 'BUSINESS', basePrice: 4200000, availableSeats: 20 },
+          ];
+
+      const flight = await this.prisma.flight.create({
+        data: {
+          flightNumber: dto.flightNumber,
+          aircraftId: dto.aircraftId,
+          originAirportId: dto.originAirportId,
+          destinationAirportId: dto.destinationAirportId,
+          departureTime: dep,
+          arrivalTime: arr,
+          durationMinutes: dto.durationMinutes,
+          fares: {
+            create: rawFares.map((f) => ({
+              cabinClass: f.cabinClass,
+              basePrice: f.basePrice,
+              availableSeats: f.availableSeats,
+              baggageAllowanceKg: f.baggageAllowanceKg || 20,
+              cabinBaggageKg: f.cabinBaggageKg || 7,
+              refundFee: f.refundFee || 300000,
+              changeFee: f.changeFee || 200000,
+            })),
+          },
+        },
+        include: { fares: true },
+      });
+
+      // Auto-generate seats for this flight
+      const seatsToInsert = [];
+      for (let r = 1; r <= 3; r++) {
+        for (const col of ['A', 'C', 'D', 'G']) {
+          seatsToInsert.push({
+            aircraftId: dto.aircraftId,
+            flightId: flight.id,
+            seatNumber: `${r}${col}`,
+            cabinClass: 'BUSINESS',
+            row: r,
+            col,
+            status: 'AVAILABLE',
+          });
+        }
+      }
+      for (let r = 10; r <= 20; r++) {
+        for (const col of ['A', 'B', 'C', 'D', 'E', 'F']) {
+          seatsToInsert.push({
+            aircraftId: dto.aircraftId,
+            flightId: flight.id,
+            seatNumber: `${r}${col}`,
+            cabinClass: 'ECONOMY',
+            row: r,
+            col,
+            status: 'AVAILABLE',
+          });
+        }
+      }
+      await this.prisma.seat.createMany({ data: seatsToInsert });
+
+      return flight;
+    } catch (err: any) {
+      console.error('DEBUG CREATE FLIGHT ERROR:', err);
+      if (err instanceof BadRequestException || err instanceof ConflictException || err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new BadRequestException(`Lỗi tạo chuyến bay: ${err?.message || err}`);
+    }
   }
 
   async updateFlight(id: string, dto: UpdateFlightDto) {

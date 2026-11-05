@@ -23,14 +23,28 @@ export default function StaffFlightsPage() {
   const [flights, setFlights] = useState<any[]>([]);
   const [airports, setAirports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aircraftList, setAircraftList] = useState<any[]>([]);
 
   // Create flight modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
-  const [flightNumber, setFlightNumber] = useState('VSK-208');
+  const [flightNumber, setFlightNumber] = useState('HG-208');
+  const [selectedAircraftId, setSelectedAircraftId] = useState('');
   const [originAirportId, setOriginAirportId] = useState('');
   const [destinationAirportId, setDestinationAirportId] = useState('');
-  const [depTime, setDepTime] = useState('2026-11-01T08:00');
-  const [arrTime, setArrTime] = useState('2026-11-01T10:15');
+
+  // Default dates: tomorrow 08:00 and 10:15
+  const getDefaultTime = (hours: number, minutes: number) => {
+    const d = new Date(Date.now() + 86400000);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const h = String(hours).padStart(2, '0');
+    const m = String(minutes).padStart(2, '0');
+    return `${year}-${month}-${day}T${h}:${m}`;
+  };
+
+  const [depTime, setDepTime] = useState(getDefaultTime(8, 0));
+  const [arrTime, setArrTime] = useState(getDefaultTime(10, 15));
   const [durationMinutes, setDurationMinutes] = useState(135);
   const [economyPrice, setEconomyPrice] = useState(1500000);
   const [businessPrice, setBusinessPrice] = useState(4200000);
@@ -48,9 +62,23 @@ export default function StaffFlightsPage() {
       const [fData, apData] = await Promise.all([api.getAllFlights(), api.getAirports()]);
       setFlights(fData);
       setAirports(apData);
+
+      // Extract unique aircraft from flights
+      const acMap = new Map();
+      fData.forEach((f) => {
+        if (f.aircraft && !acMap.has(f.aircraft.id)) {
+          acMap.set(f.aircraft.id, f.aircraft);
+        }
+      });
+      const uniqueAc = Array.from(acMap.values());
+      setAircraftList(uniqueAc);
+
+      if (uniqueAc.length > 0 && !selectedAircraftId) {
+        setSelectedAircraftId(uniqueAc[0].id);
+      }
       if (apData.length >= 2) {
-        setOriginAirportId(apData[0].id);
-        setDestinationAirportId(apData[1].id);
+        setOriginAirportId((prev) => prev || apData[0].id);
+        setDestinationAirportId((prev) => prev || apData[1].id);
       }
       setLoading(false);
     } catch {
@@ -67,8 +95,11 @@ export default function StaffFlightsPage() {
     setMessage(null);
 
     try {
-      // Use existing aircraft ID from first flight or default
-      const aircraftId = flights[0]?.aircraftId || 'dreamliner';
+      const aircraftId = selectedAircraftId || aircraftList[0]?.id || flights[0]?.aircraftId;
+
+      if (!aircraftId) {
+        throw new Error('Chưa chọn tàu bay điều hành');
+      }
 
       await api.createFlight({
         flightNumber,
@@ -260,6 +291,23 @@ export default function StaffFlightsPage() {
                       required
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className="font-semibold text-slate-600 dark:text-slate-300 block mb-1">
+                    Tàu bay vận hành (Aircraft) *
+                  </label>
+                  <select
+                    value={selectedAircraftId}
+                    onChange={(e) => setSelectedAircraftId(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border rounded-xl p-2.5 font-bold"
+                  >
+                    {aircraftList.map((ac) => (
+                      <option key={ac.id} value={ac.id}>
+                        {ac.model} ({ac.registrationNumber}) - Sức chứa: {ac.totalCapacity} ghế
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">

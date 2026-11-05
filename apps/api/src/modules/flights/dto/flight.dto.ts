@@ -104,7 +104,9 @@ export class CreateFlightDto {
       { cabinClass: 'BUSINESS', basePrice: 4200000, availableSeats: 20 },
     ],
   })
-  fares: Array<{
+  @IsArray()
+  @IsOptional()
+  fares?: Array<{
     cabinClass: string;
     basePrice: number;
     availableSeats: number;
