@@ -14,7 +14,10 @@ export const BookingSuccessScreen = ({ route, navigation }: any) => {
 
   const handleFinish = () => {
     resetBooking();
-    navigation.navigate('Home');
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'MainTabs' }],
+    });
   };
 
   const handleViewBoardingPass = () => {

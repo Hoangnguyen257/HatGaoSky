@@ -64,7 +64,15 @@ export const BookingWizardScreen = ({ navigation }: any) => {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.centerText}>Chưa có chuyến bay nào được chọn.</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Home')} style={styles.backHomeBtn}>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'MainTabs' }],
+            })
+          }
+          style={styles.backHomeBtn}
+        >
           <Text style={styles.backHomeText}>Quay lại trang tìm kiếm</Text>
         </TouchableOpacity>
       </View>
@@ -82,6 +90,31 @@ export const BookingWizardScreen = ({ navigation }: any) => {
       return;
     }
 
+    // Check if user has selected seats
+    if (selectedSeats.length === 0) {
+      Alert.alert(
+        'Chưa chọn chỗ ngồi',
+        'Quý khách chưa chọn ghế ngồi trên tàu bay. Quý khách muốn mở sơ đồ để chọn chỗ ngồi ưng ý (cửa sổ, lối đi...) hay để hệ thống tự động xếp ghế?',
+        [
+          {
+            text: 'Mở sơ đồ chọn ghế',
+            onPress: () => setSeatModalVisible(true),
+            style: 'default',
+          },
+          {
+            text: 'Tự động xếp ghế',
+            onPress: () => executeBooking(['12A']),
+            style: 'cancel',
+          },
+        ]
+      );
+      return;
+    }
+
+    executeBooking(selectedSeats);
+  };
+
+  const executeBooking = async (seatsToBook: string[]) => {
     setIsSubmitting(true);
     try {
       // 1. Prepare Services
@@ -137,7 +170,7 @@ export const BookingWizardScreen = ({ navigation }: any) => {
             nationality: 'VNM',
           },
         ],
-        outboundSeats: selectedSeats.length > 0 ? selectedSeats : ['12A'],
+        outboundSeats: seatsToBook,
         services: servicesList,
       });
 
@@ -151,9 +184,25 @@ export const BookingWizardScreen = ({ navigation }: any) => {
 
       setIsSubmitting(false);
 
-      // Navigate to Confirmation
+      // Navigate to Confirmation with full booking context so Boarding Pass displays accurate seat & flight
       navigation.navigate('BookingSuccess', {
-        booking: bookingRes,
+        booking: {
+          ...bookingRes,
+          outboundFlight,
+          flight: outboundFlight,
+          outboundSeats: seatsToBook,
+          cabinClass,
+          passengers: [
+            {
+              firstName: firstName.trim(),
+              lastName: lastName.trim(),
+              passengerType: 'ADULT',
+              dateOfBirth,
+              passportNumber: passportNumber.trim(),
+              nationality: 'VNM',
+            },
+          ],
+        },
         payment: payRes,
       });
     } catch (err: any) {
@@ -237,28 +286,71 @@ export const BookingWizardScreen = ({ navigation }: any) => {
         {/* Section 2: Seat Selection */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Ionicons name="grid" size={18} color={COLORS.navy} />
-            <Text style={styles.sectionTitle}>2. Chỗ ngồi trên tàu bay</Text>
-          </View>
-
-          <View style={styles.seatPreviewRow}>
-            <View>
-              <Text style={styles.seatStatusLabel}>Ghế đã chọn:</Text>
-              <Text style={styles.seatNumberDisplay}>
-                {selectedSeats.length > 0 ? selectedSeats.join(', ') : 'Chưa chọn (Hệ thống xếp tự động)'}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Ionicons name="grid" size={18} color={COLORS.navy} />
+              <Text style={styles.sectionTitle}>2. Chỗ ngồi trên tàu bay</Text>
+            </View>
+            <View style={styles.aircraftBadge}>
+              <Ionicons name="airplane" size={12} color={COLORS.navy} />
+              <Text style={styles.aircraftBadgeText}>
+                {outboundFlight.aircraft?.model || 'Airbus / Boeing'}
               </Text>
             </View>
-            <TouchableOpacity
-              onPress={() => setSeatModalVisible(true)}
-              style={styles.chooseSeatBtn}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="airplane-outline" size={16} color={COLORS.white} />
-              <Text style={styles.chooseSeatText}>
-                {selectedSeats.length > 0 ? 'Đổi ghế' : 'Chọn chỗ ngồi'}
-              </Text>
-            </TouchableOpacity>
           </View>
+
+          {selectedSeats.length > 0 ? (
+            <View style={styles.seatSelectedBox}>
+              <View style={styles.seatSelectedLeft}>
+                <View style={styles.seatIconCircle}>
+                  <Ionicons name="checkmark-circle" size={26} color={COLORS.emerald} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.seatSelectedTitle}>Ghế đã chọn:</Text>
+                  <View style={styles.seatBadgesRow}>
+                    {selectedSeats.map((s) => (
+                      <View key={s} style={styles.seatBadgePill}>
+                        <Ionicons name="airplane" size={12} color={COLORS.gold} />
+                        <Text style={styles.seatBadgePillText}>Ghế {s}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Text style={styles.seatSelectedCabin}>
+                    {cabinClass === 'BUSINESS' ? '✨ Khoang Thương gia' : 'Khoang Phổ thông'}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => setSeatModalVisible(true)}
+                style={styles.changeSeatBtn}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="swap-horizontal" size={16} color={COLORS.navy} />
+                <Text style={styles.changeSeatText}>Đổi ghế</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.seatPromptBox}>
+              <View style={styles.seatPromptTop}>
+                <View style={styles.seatAlertIcon}>
+                  <Ionicons name="hand-right" size={22} color={COLORS.gold} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.seatPromptTitle}>Quý khách chưa chọn ghế ngồi</Text>
+                  <Text style={styles.seatPromptDesc}>
+                    Bấm nút bên dưới để mở sơ đồ máy bay và chọn vị trí yêu thích (cửa sổ, lối đi,...).
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => setSeatModalVisible(true)}
+                style={styles.openSeatMapBtn}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="grid-outline" size={18} color={COLORS.white} />
+                <Text style={styles.openSeatMapBtnText}>MỞ SƠ ĐỒ CHỌN GHẾ NGỒI</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Section 3: Ancillary Services */}
@@ -564,6 +656,142 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: COLORS.slate900,
+  },
+  aircraftBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.slate100,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  aircraftBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.navy,
+  },
+  seatSelectedBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 1.5,
+    borderColor: '#86efac',
+    borderRadius: 16,
+    padding: 14,
+  },
+  seatSelectedLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  seatIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#dcfce7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  seatSelectedTitle: {
+    fontSize: 11,
+    color: COLORS.slate600,
+    fontWeight: '600',
+  },
+  seatBadgesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginVertical: 4,
+  },
+  seatBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.navy,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  seatBadgePillText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.gold,
+  },
+  seatSelectedCabin: {
+    fontSize: 11,
+    color: COLORS.slate500,
+    fontWeight: '500',
+  },
+  changeSeatBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.navy,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  changeSeatText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.navy,
+  },
+  seatPromptBox: {
+    backgroundColor: '#fffbeb',
+    borderWidth: 1.5,
+    borderColor: '#fde68a',
+    borderRadius: 16,
+    padding: 14,
+  },
+  seatPromptTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 12,
+  },
+  seatAlertIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fef3c7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  seatPromptTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#92400e',
+  },
+  seatPromptDesc: {
+    fontSize: 11,
+    color: '#78350f',
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  openSeatMapBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: COLORS.navy,
+    paddingVertical: 12,
+    borderRadius: 14,
+    shadowColor: COLORS.navy,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  openSeatMapBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.gold,
+    letterSpacing: 0.5,
   },
   seatPreviewRow: {
     flexDirection: 'row',
