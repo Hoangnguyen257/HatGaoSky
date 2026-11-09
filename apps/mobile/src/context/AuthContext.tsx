@@ -108,17 +108,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const quickLoginRole = async (role: 'CUSTOMER' | 'STAFF' | 'STAFF_MANAGER' | 'ADMIN') => {
     const creds = DEMO_ACCOUNTS[role];
-    if (creds) {
-      try {
-        await login(creds.email, creds.pass);
-      } catch {
-        setUser({
-          id: `u-${role.toLowerCase()}`,
-          email: creds.email,
-          fullName: `${role} Demo User`,
-          role,
-        });
-      }
+    if (!creds) return;
+    // Show loading state by clearing user first so UI shows transition
+    const success = await login(creds.email, creds.pass);
+    if (!success) {
+      // Fallback: set local user so UI still updates
+      const fallback: User = {
+        id: `u-${role.toLowerCase()}`,
+        email: creds.email,
+        fullName: role === 'CUSTOMER' ? 'Khách Hàng Demo'
+                : role === 'STAFF' ? 'Nhân Viên Demo'
+                : role === 'STAFF_MANAGER' ? 'Quản Lý Demo'
+                : 'Quản Trị Demo',
+        role,
+        loyaltyAccount: role === 'CUSTOMER' ? {
+          tier: 'GOLD',
+          milesBalance: 15000,
+          membershipNumber: 'VSK-DEMO01',
+        } : undefined,
+      };
+      setUser(fallback);
+      await saveToken('demo-jwt-' + role.toLowerCase());
+      await AsyncStorage.setItem('@vietsky_user', JSON.stringify(fallback));
     }
   };
 

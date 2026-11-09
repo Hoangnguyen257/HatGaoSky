@@ -178,11 +178,24 @@ export const LoginScreen = ({ navigation }: any) => {
     }
   };
 
+  const ROLE_LABELS: Record<string, string> = {
+    CUSTOMER: 'Khách Hàng',
+    STAFF: 'Nhân Viên',
+    STAFF_MANAGER: 'Quản Lý',
+    ADMIN: 'Quản Trị Viên',
+  };
+
   const handleQuickLogin = async (role: 'CUSTOMER' | 'STAFF' | 'STAFF_MANAGER' | 'ADMIN') => {
     setLoading(true);
     try {
       await quickLoginRole(role);
-      Alert.alert('Thành công', `Đã chuyển đổi sang tài khoản: ${role}`);
+      // User state is now updated — no need to navigate manually,
+      // the conditional render `if (user)` will show the profile view.
+      Alert.alert(
+        '✅ Chuyển tài khoản thành công',
+        `Đang xem với vai trò: ${ROLE_LABELS[role] || role}`,
+        [{ text: 'OK' }]
+      );
     } catch (err: any) {
       Alert.alert('Lỗi', err.message || 'Không thể đăng nhập tài khoản mẫu');
     } finally {
@@ -203,7 +216,31 @@ export const LoginScreen = ({ navigation }: any) => {
             <Text style={styles.profileName}>{user.fullName}</Text>
             <Text style={styles.profileEmail}>{user.email}</Text>
             <View style={styles.roleBadge}>
-              <Text style={styles.roleBadgeText}>VAI TRÒ: {user.role}</Text>
+              <Ionicons
+                name={
+                  user.role === 'ADMIN' ? 'shield-checkmark' :
+                  user.role === 'STAFF_MANAGER' ? 'bar-chart' :
+                  user.role === 'STAFF' ? 'briefcase' : 'star'
+                }
+                size={14}
+                color={
+                  user.role === 'ADMIN' ? '#ef4444' :
+                  user.role === 'STAFF_MANAGER' ? COLORS.cyan :
+                  user.role === 'STAFF' ? COLORS.emerald : COLORS.gold
+                }
+              />
+              <Text style={[
+                styles.roleBadgeText,
+                user.role === 'ADMIN' && { color: '#ef4444' },
+                user.role === 'STAFF_MANAGER' && { color: COLORS.cyan },
+                user.role === 'STAFF' && { color: COLORS.emerald },
+              ]}>
+                {user.role === 'CUSTOMER' ? '⭐ Hội viên Khách hàng' :
+                 user.role === 'STAFF' ? '✈️ Nhân viên Hạt Gạo Sky' :
+                 user.role === 'STAFF_MANAGER' ? '📊 Quản lý Hạt Gạo Sky' :
+                 user.role === 'ADMIN' ? '🛡️ Quản trị viên Hệ thống' :
+                 `VAI TRÒ: ${user.role}`}
+              </Text>
             </View>
 
             {user.role !== 'GUEST' && user.role !== 'CUSTOMER' && (
@@ -225,19 +262,55 @@ export const LoginScreen = ({ navigation }: any) => {
 
           {/* Quick Switch Role Bar */}
           <View style={styles.switchSection}>
-            <Text style={styles.switchTitle}>Chuyển nhanh tài khoản demo (Quick Role Switcher):</Text>
+            <Text style={styles.switchTitle}>Chuyển nhanh tài khoản demo:</Text>
             <View style={styles.quickRoles}>
-              <TouchableOpacity onPress={() => handleQuickLogin('CUSTOMER')} style={styles.rolePill}>
-                <Text style={styles.rolePillText}>🌟 Khách hàng (Customer)</Text>
+              <TouchableOpacity
+                onPress={() => handleQuickLogin('CUSTOMER')}
+                style={[styles.rolePill, user.role === 'CUSTOMER' && styles.rolePillActive]}
+                disabled={loading}
+              >
+                <Text style={[styles.rolePillText, user.role === 'CUSTOMER' && styles.rolePillTextActive]}>
+                  🌟 Khách hàng
+                </Text>
+                {user.role === 'CUSTOMER' && (
+                  <Ionicons name="checkmark-circle" size={14} color={COLORS.gold} />
+                )}
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleQuickLogin('STAFF')} style={styles.rolePill}>
-                <Text style={styles.rolePillText}>✈️ Nhân viên (Staff)</Text>
+              <TouchableOpacity
+                onPress={() => handleQuickLogin('STAFF')}
+                style={[styles.rolePill, user.role === 'STAFF' && styles.rolePillActive]}
+                disabled={loading}
+              >
+                <Text style={[styles.rolePillText, user.role === 'STAFF' && styles.rolePillTextActive]}>
+                  ✈️ Nhân viên
+                </Text>
+                {user.role === 'STAFF' && (
+                  <Ionicons name="checkmark-circle" size={14} color={COLORS.gold} />
+                )}
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleQuickLogin('STAFF_MANAGER')} style={styles.rolePill}>
-                <Text style={styles.rolePillText}>📊 Quản lý (Manager)</Text>
+              <TouchableOpacity
+                onPress={() => handleQuickLogin('STAFF_MANAGER')}
+                style={[styles.rolePill, user.role === 'STAFF_MANAGER' && styles.rolePillActive]}
+                disabled={loading}
+              >
+                <Text style={[styles.rolePillText, user.role === 'STAFF_MANAGER' && styles.rolePillTextActive]}>
+                  📊 Quản lý
+                </Text>
+                {user.role === 'STAFF_MANAGER' && (
+                  <Ionicons name="checkmark-circle" size={14} color={COLORS.gold} />
+                )}
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleQuickLogin('ADMIN')} style={styles.rolePill}>
-                <Text style={styles.rolePillText}>🛡️ Quản trị viên (Admin)</Text>
+              <TouchableOpacity
+                onPress={() => handleQuickLogin('ADMIN')}
+                style={[styles.rolePill, user.role === 'ADMIN' && styles.rolePillActive]}
+                disabled={loading}
+              >
+                <Text style={[styles.rolePillText, user.role === 'ADMIN' && styles.rolePillTextActive]}>
+                  🛡️ Quản trị
+                </Text>
+                {user.role === 'ADMIN' && (
+                  <Ionicons name="checkmark-circle" size={14} color={COLORS.gold} />
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -969,16 +1042,26 @@ const styles = StyleSheet.create({
   },
   rolePill: {
     backgroundColor: COLORS.slate50,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 10,
     borderWidth: 1,
     borderColor: COLORS.slate200,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  rolePillActive: {
+    backgroundColor: 'rgba(245,158,11,0.12)',
+    borderColor: COLORS.gold,
   },
   rolePillText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: COLORS.navy,
+  },
+  rolePillTextActive: {
+    color: COLORS.goldDark,
   },
 
   // Logged-in profile styles
