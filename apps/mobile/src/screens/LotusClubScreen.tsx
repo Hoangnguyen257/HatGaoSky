@@ -23,14 +23,17 @@ const DEFAULT_REWARDS = [
 
 export const LotusClubScreen = ({ navigation }: any) => {
   const { user, quickLoginRole } = useAuth();
-  const [miles, setMiles] = useState(user?.loyaltyAccount?.milesBalance || 42500);
-  const [tier, setTier] = useState(user?.loyaltyAccount?.tier || 'PLATINUM');
+  const [miles, setMiles] = useState(user?.loyaltyAccount?.milesBalance || 0);
+  const [tier, setTier] = useState(user?.loyaltyAccount?.tier || 'MEMBER');
   const [rewards, setRewards] = useState(DEFAULT_REWARDS);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
       loadLoyalty();
+    } else {
+      setMiles(0);
+      setTier('MEMBER');
     }
   }, [user]);
 
@@ -39,14 +42,32 @@ export const LotusClubScreen = ({ navigation }: any) => {
       const data = await api.getMyLoyalty();
       if (data?.milesBalance !== undefined) {
         setMiles(data.milesBalance);
-        setTier(data.tier || 'PLATINUM');
+        setTier(data.tier || user?.loyaltyAccount?.tier || 'GOLD');
       }
     } catch {
-      // Keep demo values
+      if (user?.loyaltyAccount?.milesBalance !== undefined) {
+        setMiles(user.loyaltyAccount.milesBalance);
+        setTier(user.loyaltyAccount.tier || 'GOLD');
+      }
     }
   };
 
   const handleRedeem = (reward: any) => {
+    if (!user) {
+      Alert.alert(
+        'Yêu cầu đăng nhập',
+        'Vui lòng đăng nhập tài khoản hội viên Lotus Club để tích lũy và đổi dặm thưởng.',
+        [
+          { text: 'Đóng', style: 'cancel' },
+          {
+            text: 'Đăng nhập',
+            onPress: () => navigation.navigate('ProfileTab'),
+          },
+        ]
+      );
+      return;
+    }
+
     if (miles < reward.milesRequired) {
       Alert.alert('Không đủ dặm', `Bạn cần tối thiểu ${reward.milesRequired.toLocaleString('vi-VN')} dặm để đổi phần thưởng này.`);
       return;
@@ -82,52 +103,85 @@ export const LotusClubScreen = ({ navigation }: any) => {
 
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Membership Card */}
-        <View style={styles.cardWrapper}>
-          <View style={styles.memberCard}>
-            <View style={styles.cardTop}>
-              <View style={styles.cardLogo}>
-                <Ionicons name="airplane" size={16} color={COLORS.navy} />
-                <Text style={styles.cardLogoText}>HẠT GẠO SKY</Text>
+        {user ? (
+          <View style={styles.cardWrapper}>
+            <View style={styles.memberCard}>
+              <View style={styles.cardTop}>
+                <View style={styles.cardLogo}>
+                  <Ionicons name="airplane" size={16} color={COLORS.navy} />
+                  <Text style={styles.cardLogoText}>HẠT GẠO SKY</Text>
+                </View>
+                <View style={styles.tierPill}>
+                  <Text style={styles.tierPillText}>{tier}</Text>
+                </View>
               </View>
-              <View style={styles.tierPill}>
-                <Text style={styles.tierPillText}>{tier}</Text>
-              </View>
-            </View>
 
-            <View style={styles.milesSection}>
-              <Text style={styles.milesLabel}>SỐ DƯ DẶM THƯỞNG</Text>
-              <Text style={styles.milesValue}>
-                {miles.toLocaleString('vi-VN')} <Text style={styles.milesUnit}>dặm</Text>
-              </Text>
-            </View>
-
-            <View style={styles.cardBottom}>
-              <View>
-                <Text style={styles.cardHolderLabel}>CHỦ THẺ</Text>
-                <Text style={styles.cardHolderName}>
-                  {user ? user.fullName?.toUpperCase() : 'NGUYEN VAN AN'}
+              <View style={styles.milesSection}>
+                <Text style={styles.milesLabel}>SỐ DƯ DẶM THƯỞNG</Text>
+                <Text style={styles.milesValue}>
+                  {miles.toLocaleString('vi-VN')} <Text style={styles.milesUnit}>dặm</Text>
                 </Text>
               </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={styles.cardHolderLabel}>SỐ HỘI VIÊN</Text>
-                <Text style={styles.cardNumber}>
-                  {user?.loyaltyAccount?.membershipNumber || 'VN-9872-4512'}
-                </Text>
+
+              <View style={styles.cardBottom}>
+                <View>
+                  <Text style={styles.cardHolderLabel}>CHỦ THẺ</Text>
+                  <Text style={styles.cardHolderName}>
+                    {user.fullName?.toUpperCase() || 'HỘI VIÊN'}
+                  </Text>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={styles.cardHolderLabel}>SỐ HỘI VIÊN</Text>
+                  <Text style={styles.cardNumber}>
+                    {user.loyaltyAccount?.membershipNumber || `HG-${user.id?.slice(0, 8).toUpperCase() || '889922'}`}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
-        </View>
+        ) : (
+          <View style={styles.cardWrapper}>
+            <View style={styles.guestCard}>
+              <View style={styles.guestCardTop}>
+                <View style={styles.cardLogo}>
+                  <Ionicons name="airplane" size={16} color={COLORS.navy} />
+                  <Text style={styles.cardLogoText}>HẠT GẠO SKY</Text>
+                </View>
+                <View style={styles.guestBadge}>
+                  <Ionicons name="star" size={12} color={COLORS.gold} />
+                  <Text style={styles.guestBadgeText}>LOTUS CLUB</Text>
+                </View>
+              </View>
 
-        {!user && (
-          <View style={styles.loginBanner}>
-            <Ionicons name="sparkles" size={20} color={COLORS.gold} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.loginBannerTitle}>Đăng nhập để xem dặm thực tế</Text>
-              <Text style={styles.loginBannerDesc}>Tích lũy dặm thưởng cho mọi hành trình bay</Text>
+              <View style={styles.guestContent}>
+                <View style={styles.guestIconCircle}>
+                  <Ionicons name="ribbon" size={28} color={COLORS.gold} />
+                </View>
+                <Text style={styles.guestTitle}>Chương trình Hội viên Lotus Club</Text>
+                <Text style={styles.guestDesc}>
+                  Đăng nhập để xem số dư dặm thưởng cá nhân, tích lũy dặm trên mỗi chuyến bay và đổi quà tặng hấp dẫn.
+                </Text>
+              </View>
+
+              <View style={styles.guestActions}>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ProfileTab')}
+                  style={styles.guestLoginBtn}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="log-in-outline" size={16} color={COLORS.navy} />
+                  <Text style={styles.guestLoginText}>Đăng nhập ngay</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => quickLoginRole('CUSTOMER')}
+                  style={styles.guestQuickLoginBtn}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.guestQuickLoginText}>Đăng nhập nhanh Demo</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <TouchableOpacity onPress={() => quickLoginRole('CUSTOMER')} style={styles.quickLoginBtn}>
-              <Text style={styles.quickLoginText}>Đăng nhập</Text>
-            </TouchableOpacity>
           </View>
         )}
 
@@ -172,17 +226,17 @@ export const LotusClubScreen = ({ navigation }: any) => {
                   onPress={() => handleRedeem(r)}
                   style={[
                     styles.redeemBtn,
-                    miles < r.milesRequired && styles.disabledRedeemBtn,
+                    (!user || miles < r.milesRequired) && styles.disabledRedeemBtn,
                   ]}
                   activeOpacity={0.8}
                 >
                   <Text
                     style={[
                       styles.redeemBtnText,
-                      miles < r.milesRequired && styles.disabledRedeemText,
+                      (!user || miles < r.milesRequired) && styles.disabledRedeemText,
                     ]}
                   >
-                    Đổi quà
+                    {user ? 'Đổi quà' : 'Cần đăng nhập'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -296,35 +350,100 @@ const styles = StyleSheet.create({
     marginTop: 2,
     letterSpacing: 1,
   },
-  loginBanner: {
+  guestCard: {
+    backgroundColor: '#0f2445',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  guestCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  guestBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#fffbeb',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#fef3c7',
+    gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  loginBannerTitle: {
+  guestBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: COLORS.gold,
+    letterSpacing: 0.8,
+  },
+  guestContent: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  guestIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  guestTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: COLORS.white,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  guestDesc: {
+    fontSize: 12,
+    color: COLORS.slate300,
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 8,
+    marginBottom: 16,
+  },
+  guestActions: {
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'center',
+  },
+  guestLoginBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.gold,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  guestLoginText: {
     fontSize: 12,
     fontWeight: '800',
-    color: COLORS.slate800,
+    color: COLORS.navy,
   },
-  loginBannerDesc: {
-    fontSize: 10,
-    color: COLORS.slate500,
+  guestQuickLoginBtn: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
-  quickLoginBtn: {
-    backgroundColor: COLORS.navy,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-  },
-  quickLoginText: {
-    fontSize: 11,
+  guestQuickLoginText: {
+    fontSize: 12,
     fontWeight: '700',
     color: COLORS.white,
   },
