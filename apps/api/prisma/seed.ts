@@ -403,9 +403,9 @@ async function main() {
   ];
 
   let primaryFlightId = '';
-  // Generate flights for Today + upcoming 7 days
+  // Generate flights for Today + upcoming 30 days
   const targetDates: Date[] = [];
-  for (let i = 0; i <= 7; i++) {
+  for (let i = 0; i <= 30; i++) {
     targetDates.push(new Date(now.getTime() + i * 24 * 60 * 60 * 1000));
   }
   for (const tDate of targetDates) {

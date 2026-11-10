@@ -3,6 +3,8 @@ import { request } from './client';
 export const api = {
   // Auth
   login: (body: any) => request<any>('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
+  verifyMfa: (body: { mfaSessionToken: string; code: string }) =>
+    request<any>('/auth/mfa/verify', { method: 'POST', body: JSON.stringify(body) }),
   register: (body: any) => request<any>('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
   getMe: () => request<any>('/auth/me'),
 

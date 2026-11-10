@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlightSearchScreen } from '../screens/FlightSearchScreen';
 import { ManageBookingScreen } from '../screens/ManageBookingScreen';
 import { LotusClubScreen } from '../screens/LotusClubScreen';
@@ -12,143 +12,192 @@ import { useAuth } from '../context/AuthContext';
 
 const Tab = createBottomTabNavigator();
 
-// Placeholder screen for staff portal when user doesn't have access
-const StaffAccessDeniedScreen = ({ navigation }: any) => (
-  <View style={accessStyles.container}>
-    <View style={accessStyles.iconCircle}>
-      <Ionicons name="lock-closed" size={36} color={COLORS.gold} />
-    </View>
-    <Text style={accessStyles.title}>Khu vực Điều hành</Text>
-    <Text style={accessStyles.desc}>
-      Chỉ dành cho nhân viên và quản lý{'\n'}Hạt Gạo Sky Airlines
-    </Text>
-    <TouchableOpacity
-      style={accessStyles.loginBtn}
-      onPress={() => navigation.navigate('ProfileTab')}
-      activeOpacity={0.85}
-    >
-      <Ionicons name="person-circle-outline" size={18} color={COLORS.navy} />
-      <Text style={accessStyles.loginBtnText}>Đăng nhập tài khoản nhân viên</Text>
-    </TouchableOpacity>
-  </View>
-);
-
-const accessStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.slate50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(245,158,11,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(245,158,11,0.3)',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: COLORS.navy,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  desc: {
-    fontSize: 13,
-    color: COLORS.slate500,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 28,
-  },
-  loginBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: COLORS.gold,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 14,
-  },
-  loginBtnText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: COLORS.navy,
-  },
-});
-
 export const TabNavigator = () => {
-  const { isStaff, isManager, isAdmin } = useAuth();
-  const hasStaffAccess = isStaff || isManager || isAdmin;
+  const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+  const role = user?.role || 'GUEST';
 
+  // Prevent bottom tab bar from being overlapped (lẹm) by Android/iOS navigation gesture bar
+  const bottomPadding = Math.max(insets.bottom, 24);
+  const tabHeight = 62 + bottomPadding;
+
+  const screenOptions = {
+    headerShown: false,
+    tabBarActiveTintColor: COLORS.primary,
+    tabBarInactiveTintColor: '#94a3b8',
+    tabBarStyle: {
+      backgroundColor: '#ffffff',
+      borderTopColor: '#e2e8f0',
+      borderTopWidth: 1,
+      height: tabHeight,
+      paddingBottom: bottomPadding,
+      paddingTop: 6,
+    },
+    tabBarLabelStyle: {
+      fontSize: 10.5,
+      fontWeight: '700' as const,
+      marginTop: 2,
+      marginBottom: 3,
+    },
+  };
+
+  // 1. STAFF (Nhân viên tác nghiệp mặt đất & chuyến bay)
+  if (role === 'STAFF') {
+    return (
+      <Tab.Navigator screenOptions={screenOptions}>
+        <Tab.Screen
+          name="StaffPortalTab"
+          component={StaffPortalScreen}
+          options={{
+            tabBarLabel: 'Tác nghiệp bay',
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'airplane' : 'airplane-outline'} size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="ManageBookingTab"
+          component={ManageBookingScreen}
+          options={{
+            tabBarLabel: 'Soát vé & Thẻ bay',
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'qr-code' : 'qr-code-outline'} size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="ProfileTab"
+          component={LoginScreen}
+          options={{
+            tabBarLabel: 'Tài khoản NV',
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'person-circle' : 'person-circle-outline'} size={size} color={color} />
+            ),
+          }}
+        />
+      </Tab.Navigator>
+    );
+  }
+
+  // 2. STAFF_MANAGER (Quản lý điều hành & Tài chính)
+  if (role === 'STAFF_MANAGER') {
+    return (
+      <Tab.Navigator screenOptions={screenOptions}>
+        <Tab.Screen
+          name="StaffPortalTab"
+          component={StaffPortalScreen}
+          options={{
+            tabBarLabel: 'Điều hành & KPI',
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="ManageBookingTab"
+          component={ManageBookingScreen}
+          options={{
+            tabBarLabel: 'Tra cứu vé',
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'receipt' : 'receipt-outline'} size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="ProfileTab"
+          component={LoginScreen}
+          options={{
+            tabBarLabel: 'Tài khoản Quản lý',
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'person-circle' : 'person-circle-outline'} size={size} color={color} />
+            ),
+          }}
+        />
+      </Tab.Navigator>
+    );
+  }
+
+  // 3. ADMIN (Quản trị viên toàn hệ thống)
+  if (role === 'ADMIN') {
+    return (
+      <Tab.Navigator screenOptions={screenOptions}>
+        <Tab.Screen
+          name="StaffPortalTab"
+          component={StaffPortalScreen}
+          options={{
+            tabBarLabel: 'Hệ thống Quản trị',
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'shield-checkmark' : 'shield-checkmark-outline'} size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="ManageBookingTab"
+          component={ManageBookingScreen}
+          options={{
+            tabBarLabel: 'Tra cứu vé',
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'receipt' : 'receipt-outline'} size={size} color={color} />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="ProfileTab"
+          component={LoginScreen}
+          options={{
+            tabBarLabel: 'Tài khoản Admin',
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'person-circle' : 'person-circle-outline'} size={size} color={color} />
+            ),
+          }}
+        />
+      </Tab.Navigator>
+    );
+  }
+
+  // 4. CUSTOMER / GUEST (Khách hàng & Khách vãng lai)
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.gray,
-        tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopColor: COLORS.border,
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 6,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-        },
-        tabBarIcon: ({ color, size, focused }) => {
-          let iconName: any = 'airplane-outline';
-          if (route.name === 'FlightSearchTab') {
-            iconName = focused ? 'airplane' : 'airplane-outline';
-          } else if (route.name === 'ManageBookingTab') {
-            iconName = focused ? 'receipt' : 'receipt-outline';
-          } else if (route.name === 'LotusClubTab') {
-            iconName = focused ? 'star' : 'star-outline';
-          } else if (route.name === 'StaffPortalTab') {
-            iconName = focused ? 'briefcase' : 'briefcase-outline';
-          } else if (route.name === 'ProfileTab') {
-            iconName = focused ? 'person-circle' : 'person-circle-outline';
-          }
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-      })}
-    >
+    <Tab.Navigator screenOptions={screenOptions}>
       <Tab.Screen
         name="FlightSearchTab"
         component={FlightSearchScreen}
-        options={{ tabBarLabel: 'Đặt vé' }}
+        options={{
+          tabBarLabel: 'Đặt vé',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'airplane' : 'airplane-outline'} size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen
         name="ManageBookingTab"
         component={ManageBookingScreen}
-        options={{ tabBarLabel: 'Quản lý vé' }}
+        options={{
+          tabBarLabel: 'Quản lý vé',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'receipt' : 'receipt-outline'} size={size} color={color} />
+          ),
+        }}
       />
       <Tab.Screen
         name="LotusClubTab"
         component={LotusClubScreen}
-        options={{ tabBarLabel: 'Lotus Club' }}
-      />
-      <Tab.Screen
-        name="StaffPortalTab"
-        component={hasStaffAccess ? StaffPortalScreen : StaffAccessDeniedScreen}
         options={{
-          tabBarLabel: 'Điều hành',
-          tabBarBadge: hasStaffAccess ? undefined : undefined,
+          tabBarLabel: 'Lotus Club',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'star' : 'star-outline'} size={size} color={color} />
+          ),
         }}
       />
       <Tab.Screen
         name="ProfileTab"
         component={LoginScreen}
-        options={{ tabBarLabel: 'Tài khoản' }}
+        options={{
+          tabBarLabel: user ? 'Hội viên' : 'Đăng nhập',
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
+          ),
+        }}
       />
     </Tab.Navigator>
   );
 };
-

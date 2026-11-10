@@ -205,113 +205,181 @@ export const LoginScreen = ({ navigation }: any) => {
 
   // Profile View when logged in
   if (user) {
+    const roleColor =
+      user.role === 'ADMIN' ? '#ef4444' :
+      user.role === 'STAFF_MANAGER' ? COLORS.cyan :
+      user.role === 'STAFF' ? COLORS.emerald : COLORS.gold;
+
+    const roleName =
+      user.role === 'CUSTOMER' ? 'Hội viên Khách hàng' :
+      user.role === 'STAFF' ? 'Nhân viên Hạt Gạo Sky' :
+      user.role === 'STAFF_MANAGER' ? 'Quản lý Hạt Gạo Sky' :
+      user.role === 'ADMIN' ? 'Quản trị viên Hệ thống' : user.role;
+
+    const roleIcon: any =
+      user.role === 'ADMIN' ? 'shield-checkmark' :
+      user.role === 'STAFF_MANAGER' ? 'bar-chart' :
+      user.role === 'STAFF' ? 'briefcase' : 'star';
+
     return (
       <View style={styles.container}>
         <Header title="Tài khoản" />
         <ScrollView contentContainerStyle={styles.scroll}>
-          <View style={styles.profileCard}>
-            <View style={styles.avatarCircle}>
-              <Ionicons name="person" size={36} color={COLORS.navy} />
-            </View>
-            <Text style={styles.profileName}>{user.fullName}</Text>
-            <Text style={styles.profileEmail}>{user.email}</Text>
-            <View style={styles.roleBadge}>
-              <Ionicons
-                name={
-                  user.role === 'ADMIN' ? 'shield-checkmark' :
-                  user.role === 'STAFF_MANAGER' ? 'bar-chart' :
-                  user.role === 'STAFF' ? 'briefcase' : 'star'
-                }
-                size={14}
-                color={
-                  user.role === 'ADMIN' ? '#ef4444' :
-                  user.role === 'STAFF_MANAGER' ? COLORS.cyan :
-                  user.role === 'STAFF' ? COLORS.emerald : COLORS.gold
-                }
-              />
-              <Text style={[
-                styles.roleBadgeText,
-                user.role === 'ADMIN' && { color: '#ef4444' },
-                user.role === 'STAFF_MANAGER' && { color: COLORS.cyan },
-                user.role === 'STAFF' && { color: COLORS.emerald },
-              ]}>
-                {user.role === 'CUSTOMER' ? '⭐ Hội viên Khách hàng' :
-                 user.role === 'STAFF' ? '✈️ Nhân viên Hạt Gạo Sky' :
-                 user.role === 'STAFF_MANAGER' ? '📊 Quản lý Hạt Gạo Sky' :
-                 user.role === 'ADMIN' ? '🛡️ Quản trị viên Hệ thống' :
-                 `VAI TRÒ: ${user.role}`}
-              </Text>
+
+          {/* Profile Hero Card */}
+          <View style={styles.profileHero}>
+            <View style={styles.profileHeroBg}>
+              <View style={styles.avatarCircle}>
+                <Ionicons name="person" size={36} color={COLORS.navy} />
+              </View>
+              <Text style={styles.profileName}>{user.fullName}</Text>
+              <Text style={styles.profileEmail}>{user.email}</Text>
+              <View style={[styles.roleBadge, { backgroundColor: `${roleColor}20`, borderColor: `${roleColor}50`, borderWidth: 1 }]}>
+                <Ionicons name={roleIcon} size={13} color={roleColor} />
+                <Text style={[styles.roleBadgeText, { color: roleColor }]}>{roleName}</Text>
+              </View>
             </View>
 
-            {user.role !== 'GUEST' && user.role !== 'CUSTOMER' && (
-              <TouchableOpacity
-                onPress={() => navigation.navigate('StaffPortalTab')}
-                style={styles.portalBtn}
-                activeOpacity={0.85}
-              >
-                <Ionicons name="shield-checkmark" size={18} color={COLORS.white} />
-                <Text style={styles.portalBtnText}>Mở Cổng Quản lý (Staff Portal)</Text>
+            <View style={styles.profileActions}>
+              {user.role === 'CUSTOMER' && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('LotusClubTab')}
+                  style={[styles.portalBtn, { backgroundColor: COLORS.gold }]}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="star" size={18} color={COLORS.navy} />
+                  <Text style={[styles.portalBtnText, { color: COLORS.navy }]}>Xem ưu đãi Hội viên Lotus Club</Text>
+                </TouchableOpacity>
+              )}
+
+              {user.role === 'STAFF' && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('StaffPortalTab')}
+                  style={[styles.portalBtn, { backgroundColor: COLORS.emerald }]}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="airplane" size={18} color={COLORS.white} />
+                  <Text style={styles.portalBtnText}>Vào Cổng Tác nghiệp bay</Text>
+                </TouchableOpacity>
+              )}
+
+              {user.role === 'STAFF_MANAGER' && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('StaffPortalTab')}
+                  style={[styles.portalBtn, { backgroundColor: COLORS.cyan }]}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="bar-chart" size={18} color={COLORS.white} />
+                  <Text style={styles.portalBtnText}>Vào Bảng Điều hành & KPI</Text>
+                </TouchableOpacity>
+              )}
+
+              {user.role === 'ADMIN' && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('StaffPortalTab')}
+                  style={[styles.portalBtn, { backgroundColor: COLORS.rose }]}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="shield-checkmark" size={18} color={COLORS.white} />
+                  <Text style={styles.portalBtnText}>Vào Trung tâm Quản trị Toàn quyền</Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity onPress={logout} style={styles.logoutBtn} activeOpacity={0.85}>
+                <Ionicons name="log-out-outline" size={18} color={COLORS.rose} />
+                <Text style={styles.logoutBtnText}>Đăng xuất tài khoản</Text>
               </TouchableOpacity>
-            )}
-
-            <TouchableOpacity onPress={logout} style={styles.logoutBtn} activeOpacity={0.85}>
-              <Ionicons name="log-out-outline" size={18} color={COLORS.rose} />
-              <Text style={styles.logoutBtnText}>Đăng xuất</Text>
-            </TouchableOpacity>
+            </View>
           </View>
 
           {/* Quick Switch Role Bar */}
           <View style={styles.switchSection}>
-            <Text style={styles.switchTitle}>Chuyển nhanh tài khoản demo:</Text>
+            <View style={styles.switchTitleRow}>
+              <Ionicons name="swap-horizontal" size={14} color={COLORS.slate400} />
+              <Text style={styles.switchTitle}>Chuyển nhanh tài khoản demo</Text>
+            </View>
             <View style={styles.quickRoles}>
+
               <TouchableOpacity
                 onPress={() => handleQuickLogin('CUSTOMER')}
                 style={[styles.rolePill, user.role === 'CUSTOMER' && styles.rolePillActive]}
                 disabled={loading}
+                activeOpacity={0.75}
               >
-                <Text style={[styles.rolePillText, user.role === 'CUSTOMER' && styles.rolePillTextActive]}>
-                  🌟 Khách hàng
-                </Text>
-                {user.role === 'CUSTOMER' && (
-                  <Ionicons name="checkmark-circle" size={14} color={COLORS.gold} />
-                )}
+                <View style={styles.rolePillLeft}>
+                  <View style={[styles.roleIcon, { backgroundColor: '#fef3c7' }]}>
+                    <Text style={styles.roleEmoji}>🌟</Text>
+                  </View>
+                  <View>
+                    <Text style={[styles.rolePillText, user.role === 'CUSTOMER' && styles.rolePillTextActive]}>Khách hàng</Text>
+                    <Text style={styles.rolePillSub}>customer@vietsky.vn</Text>
+                  </View>
+                </View>
+                {user.role === 'CUSTOMER'
+                  ? <Ionicons name="checkmark-circle" size={20} color={COLORS.gold} />
+                  : <Ionicons name="chevron-forward" size={16} color={COLORS.slate300} />}
               </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={() => handleQuickLogin('STAFF')}
                 style={[styles.rolePill, user.role === 'STAFF' && styles.rolePillActive]}
                 disabled={loading}
+                activeOpacity={0.75}
               >
-                <Text style={[styles.rolePillText, user.role === 'STAFF' && styles.rolePillTextActive]}>
-                  ✈️ Nhân viên
-                </Text>
-                {user.role === 'STAFF' && (
-                  <Ionicons name="checkmark-circle" size={14} color={COLORS.gold} />
-                )}
+                <View style={styles.rolePillLeft}>
+                  <View style={[styles.roleIcon, { backgroundColor: '#d1fae5' }]}>
+                    <Text style={styles.roleEmoji}>✈️</Text>
+                  </View>
+                  <View>
+                    <Text style={[styles.rolePillText, user.role === 'STAFF' && styles.rolePillTextActive]}>Nhân viên</Text>
+                    <Text style={styles.rolePillSub}>staff@vietsky.vn</Text>
+                  </View>
+                </View>
+                {user.role === 'STAFF'
+                  ? <Ionicons name="checkmark-circle" size={20} color={COLORS.gold} />
+                  : <Ionicons name="chevron-forward" size={16} color={COLORS.slate300} />}
               </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={() => handleQuickLogin('STAFF_MANAGER')}
                 style={[styles.rolePill, user.role === 'STAFF_MANAGER' && styles.rolePillActive]}
                 disabled={loading}
+                activeOpacity={0.75}
               >
-                <Text style={[styles.rolePillText, user.role === 'STAFF_MANAGER' && styles.rolePillTextActive]}>
-                  📊 Quản lý
-                </Text>
-                {user.role === 'STAFF_MANAGER' && (
-                  <Ionicons name="checkmark-circle" size={14} color={COLORS.gold} />
-                )}
+                <View style={styles.rolePillLeft}>
+                  <View style={[styles.roleIcon, { backgroundColor: '#e0f2fe' }]}>
+                    <Text style={styles.roleEmoji}>📊</Text>
+                  </View>
+                  <View>
+                    <Text style={[styles.rolePillText, user.role === 'STAFF_MANAGER' && styles.rolePillTextActive]}>Quản lý</Text>
+                    <Text style={styles.rolePillSub}>manager@vietsky.vn</Text>
+                  </View>
+                </View>
+                {user.role === 'STAFF_MANAGER'
+                  ? <Ionicons name="checkmark-circle" size={20} color={COLORS.gold} />
+                  : <Ionicons name="chevron-forward" size={16} color={COLORS.slate300} />}
               </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={() => handleQuickLogin('ADMIN')}
                 style={[styles.rolePill, user.role === 'ADMIN' && styles.rolePillActive]}
                 disabled={loading}
+                activeOpacity={0.75}
               >
-                <Text style={[styles.rolePillText, user.role === 'ADMIN' && styles.rolePillTextActive]}>
-                  🛡️ Quản trị
-                </Text>
-                {user.role === 'ADMIN' && (
-                  <Ionicons name="checkmark-circle" size={14} color={COLORS.gold} />
-                )}
+                <View style={styles.rolePillLeft}>
+                  <View style={[styles.roleIcon, { backgroundColor: '#fee2e2' }]}>
+                    <Text style={styles.roleEmoji}>🛡️</Text>
+                  </View>
+                  <View>
+                    <Text style={[styles.rolePillText, user.role === 'ADMIN' && styles.rolePillTextActive]}>Quản trị viên</Text>
+                    <Text style={styles.rolePillSub}>admin@vietsky.vn</Text>
+                  </View>
+                </View>
+                {user.role === 'ADMIN'
+                  ? <Ionicons name="checkmark-circle" size={20} color={COLORS.gold} />
+                  : <Ionicons name="chevron-forward" size={16} color={COLORS.slate300} />}
               </TouchableOpacity>
+
             </View>
           </View>
         </ScrollView>
@@ -559,37 +627,84 @@ export const LoginScreen = ({ navigation }: any) => {
                       </Text>
                     </TouchableOpacity>
 
-                    {/* Quick Demo Accounts for Grading / Testing */}
+                    {/* Quick Demo Accounts for Testing */}
                     <View style={styles.demoSection}>
-                      <Text style={styles.demoTitle}>Tài khoản mẫu (Bấm để đăng nhập ngay):</Text>
-                      <View style={styles.quickRoles}>
-                        <TouchableOpacity
-                          onPress={() => handleQuickLogin('CUSTOMER')}
-                          style={styles.rolePill}
-                        >
-                          <Text style={styles.rolePillText}>🌟 Khách hàng: customer@vietsky.vn</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => handleQuickLogin('STAFF')}
-                          style={styles.rolePill}
-                        >
-                          <Text style={styles.rolePillText}>✈️ Nhân viên bay: staff@vietsky.vn</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => handleQuickLogin('STAFF_MANAGER')}
-                          style={styles.rolePill}
-                        >
-                          <Text style={styles.rolePillText}>
-                            📊 Quản lý doanh thu: manager@vietsky.vn
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={() => handleQuickLogin('ADMIN')}
-                          style={styles.rolePill}
-                        >
-                          <Text style={styles.rolePillText}>🛡️ Quản trị viên: admin@vietsky.vn</Text>
-                        </TouchableOpacity>
+                      <View style={styles.demoSectionHeader}>
+                        <Ionicons name="sparkles" size={14} color={COLORS.gold} />
+                        <Text style={styles.demoTitle}>CHỌN TÀI KHOẢN MẪU TRẢI NGHIỆM</Text>
                       </View>
+
+                      {/* Customer Group */}
+                      <Text style={styles.roleGroupHeading}>1. VAI TRÒ HÀNH KHÁCH / KHÁCH HÀNG</Text>
+                      <TouchableOpacity
+                        onPress={() => handleQuickLogin('CUSTOMER')}
+                        style={styles.demoRoleCard}
+                        activeOpacity={0.8}
+                        disabled={loading}
+                      >
+                        <View style={[styles.demoRoleIcon, { backgroundColor: '#fef3c7' }]}>
+                          <Text style={styles.roleEmoji}>🌟</Text>
+                        </View>
+                        <View style={styles.demoRoleInfo}>
+                          <Text style={styles.demoRoleName}>Khách hàng Hội viên (Customer)</Text>
+                          <Text style={styles.demoRoleDesc}>Đặt vé, tích lũy dặm bay Lotus, tra cứu vé cá nhân</Text>
+                          <Text style={styles.demoRoleEmail}>customer@vietsky.vn</Text>
+                        </View>
+                        <Ionicons name="arrow-forward-circle" size={24} color={COLORS.gold} />
+                      </TouchableOpacity>
+
+                      {/* Airline Operations Group */}
+                      <Text style={styles.roleGroupHeading}>2. VAI TRÒ NỘI BỘ VẬN HÀNH HÃNG BAY</Text>
+                      <TouchableOpacity
+                        onPress={() => handleQuickLogin('STAFF')}
+                        style={styles.demoRoleCard}
+                        activeOpacity={0.8}
+                        disabled={loading}
+                      >
+                        <View style={[styles.demoRoleIcon, { backgroundColor: '#d1fae5' }]}>
+                          <Text style={styles.roleEmoji}>✈️</Text>
+                        </View>
+                        <View style={styles.demoRoleInfo}>
+                          <Text style={styles.demoRoleName}>Nhân viên Mặt đất (Ground Staff)</Text>
+                          <Text style={styles.demoRoleDesc}>Theo dõi lịch bay, soát vé, quản lý cổng khởi hành</Text>
+                          <Text style={styles.demoRoleEmail}>staff@vietsky.vn</Text>
+                        </View>
+                        <Ionicons name="arrow-forward-circle" size={24} color={COLORS.emerald} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={() => handleQuickLogin('STAFF_MANAGER')}
+                        style={styles.demoRoleCard}
+                        activeOpacity={0.8}
+                        disabled={loading}
+                      >
+                        <View style={[styles.demoRoleIcon, { backgroundColor: '#e0f2fe' }]}>
+                          <Text style={styles.roleEmoji}>📊</Text>
+                        </View>
+                        <View style={styles.demoRoleInfo}>
+                          <Text style={styles.demoRoleName}>Trưởng phòng Điều hành (Manager)</Text>
+                          <Text style={styles.demoRoleDesc}>Doanh thu tháng, KPI, duyệt hoàn tiền & đổi vé</Text>
+                          <Text style={styles.demoRoleEmail}>manager@vietsky.vn</Text>
+                        </View>
+                        <Ionicons name="arrow-forward-circle" size={24} color={COLORS.cyan} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={() => handleQuickLogin('ADMIN')}
+                        style={styles.demoRoleCard}
+                        activeOpacity={0.8}
+                        disabled={loading}
+                      >
+                        <View style={[styles.demoRoleIcon, { backgroundColor: '#fee2e2' }]}>
+                          <Text style={styles.roleEmoji}>🛡️</Text>
+                        </View>
+                        <View style={styles.demoRoleInfo}>
+                          <Text style={styles.demoRoleName}>Quản trị viên Hệ thống (Admin)</Text>
+                          <Text style={styles.demoRoleDesc}>Toàn quyền quản trị hệ thống, dữ liệu bay và người dùng</Text>
+                          <Text style={styles.demoRoleEmail}>admin@vietsky.vn</Text>
+                        </View>
+                        <Ionicons name="arrow-forward-circle" size={24} color={COLORS.rose} />
+                      </TouchableOpacity>
                     </View>
                   </View>
                 ) : (
@@ -1026,45 +1141,151 @@ const styles = StyleSheet.create({
     color: COLORS.goldDark,
   },
   demoSection: {
-    marginTop: 20,
-    paddingTop: 14,
+    marginTop: 22,
+    paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: COLORS.slate100,
+    borderTopColor: COLORS.slate200,
   },
-  demoTitle: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: COLORS.slate500,
+  demoSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginBottom: 10,
   },
+  demoTitle: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: COLORS.navy,
+    letterSpacing: 0.5,
+  },
+  roleGroupHeading: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: COLORS.slate400,
+    marginTop: 10,
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
+  demoRoleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: COLORS.white,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  demoRoleIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  demoRoleInfo: {
+    flex: 1,
+  },
+  demoRoleName: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.navy,
+  },
+  demoRoleDesc: {
+    fontSize: 10,
+    color: COLORS.slate500,
+    marginTop: 1,
+    lineHeight: 14,
+  },
+  demoRoleEmail: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.goldDark,
+    marginTop: 2,
+  },
   quickRoles: {
-    gap: 6,
+    gap: 10,
   },
   rolePill: {
-    backgroundColor: COLORS.slate50,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    backgroundColor: COLORS.white,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: COLORS.slate200,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   rolePillActive: {
-    backgroundColor: 'rgba(245,158,11,0.12)',
+    backgroundColor: 'rgba(245,158,11,0.08)',
     borderColor: COLORS.gold,
+    borderWidth: 2,
+  },
+  rolePillLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  roleIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roleEmoji: {
+    fontSize: 18,
   },
   rolePillText: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
     color: COLORS.navy,
   },
   rolePillTextActive: {
     color: COLORS.goldDark,
   },
+  rolePillSub: {
+    fontSize: 11,
+    color: COLORS.slate400,
+    marginTop: 1,
+  },
 
   // Logged-in profile styles
+  profileHero: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 24,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: COLORS.slate200,
+    backgroundColor: COLORS.white,
+  },
+  profileHeroBg: {
+    backgroundColor: COLORS.navy,
+    paddingTop: 28,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+  },
+  profileActions: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 10,
+  },
   profileCard: {
     backgroundColor: COLORS.white,
     borderRadius: 24,
@@ -1076,10 +1297,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.slate200,
   },
   avatarCircle: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: COLORS.slate100,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -1087,27 +1308,28 @@ const styles = StyleSheet.create({
     borderColor: COLORS.gold,
   },
   profileName: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.navy,
+    fontSize: 20,
+    fontWeight: '900',
+    color: COLORS.white,
   },
   profileEmail: {
     fontSize: 12,
-    color: COLORS.slate500,
-    marginTop: 2,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 3,
   },
   roleBadge: {
-    backgroundColor: 'rgba(15, 43, 92, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 12,
   },
   roleBadgeText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: COLORS.navy,
-    letterSpacing: 0.8,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   portalBtn: {
     flexDirection: 'row',
@@ -1115,37 +1337,47 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: COLORS.navy,
     paddingHorizontal: 18,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 14,
-    marginTop: 16,
-    width: '100%',
     justifyContent: 'center',
   },
   portalBtnText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
     color: COLORS.white,
   },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    marginTop: 16,
-    paddingVertical: 6,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#fecdd3',
+    backgroundColor: '#fff1f2',
   },
   logoutBtnText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
     color: COLORS.rose,
   },
   switchSection: {
     marginHorizontal: 16,
     marginTop: 20,
+    marginBottom: 32,
+  },
+  switchTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
   },
   switchTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: COLORS.slate300,
-    marginBottom: 10,
+    color: COLORS.slate400,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
 });

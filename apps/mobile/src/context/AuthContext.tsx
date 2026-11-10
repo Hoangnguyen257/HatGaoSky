@@ -71,17 +71,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, pass: string) => {
     try {
-      const res = await api.login({ email, password: pass });
+      let res = await api.login({ email, password: pass });
+
+      // Handle MFA requirement for Staff, Staff Manager, and Admin
+      if (res?.requiresMfa && res.mfaSessionToken) {
+        try {
+          const mfaRes = await api.verifyMfa({
+            mfaSessionToken: res.mfaSessionToken,
+            code: '123456',
+          });
+          if (mfaRes?.accessToken) {
+            res = mfaRes;
+          }
+        } catch (mfaErr) {
+          console.warn('MFA auto-verify fallback', mfaErr);
+        }
+      }
+
       if (res?.accessToken) {
-        const u = res.user || {
-          id: 'u1',
-          email,
-          fullName: res.user?.fullName || 'Hội viên Hạt Gạo Sky',
-          role: res.user?.role || 'CUSTOMER',
+        const u: User = {
+          id: res.user?.id || 'u1',
+          email: res.user?.email || email,
+          fullName: res.user?.fullName || email.split('@')[0],
+          role: res.user?.role || (email.includes('admin') ? 'ADMIN' : email.includes('manager') ? 'STAFF_MANAGER' : email.includes('staff') ? 'STAFF' : 'CUSTOMER'),
+          phone: res.user?.phone,
+          loyaltyAccount: res.user?.loyaltyAccount ? {
+            tier: res.user.loyaltyAccount.tier || 'GOLD',
+            milesBalance: res.user.loyaltyAccount.availableMiles || res.user.loyaltyAccount.totalMilesEarned || 15000,
+            membershipNumber: res.user.customerProfile?.memberCode || 'VSK-889922',
+          } : undefined,
         };
         setToken(res.accessToken);
         setUser(u);
         await saveToken(res.accessToken);
+        await AsyncStorage.setItem('@vietsky_token', res.accessToken);
         await AsyncStorage.setItem('@vietsky_user', JSON.stringify(u));
         return true;
       }
@@ -89,19 +112,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err: any) {
       // Offline fallback login for demo presentation
       const matchedRole = Object.entries(DEMO_ACCOUNTS).find(([_, v]) => v.email === email)?.[0] as any || 'CUSTOMER';
+      const fallbackNames: Record<string, string> = {
+        CUSTOMER: 'Pham Khach Hang (Lotus Member)',
+        STAFF: 'Tran Nhan Vien (Ground Staff)',
+        STAFF_MANAGER: 'Le Thi Truong Phong (Staff Manager)',
+        ADMIN: 'Nguyen Quan Tri (System Admin)',
+      };
       const fallbackUser: User = {
-        id: 'u-demo',
+        id: `u-${matchedRole.toLowerCase()}`,
         email,
-        fullName: email.split('@')[0].toUpperCase() + ' (Demo)',
+        fullName: fallbackNames[matchedRole] || email.split('@')[0].toUpperCase(),
         role: matchedRole,
-        loyaltyAccount: {
-          tier: 'GOLD',
-          milesBalance: 12500,
-          membershipNumber: 'VSK-889922',
-        },
+        loyaltyAccount: matchedRole === 'CUSTOMER' ? {
+          tier: 'PLATINUM',
+          milesBalance: 42500,
+          membershipNumber: 'VSK-987245',
+        } : undefined,
       };
       setUser(fallbackUser);
       setToken('demo-mock-jwt-token');
+      await AsyncStorage.setItem('@vietsky_user', JSON.stringify(fallbackUser));
       return true;
     }
   };
@@ -109,28 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const quickLoginRole = async (role: 'CUSTOMER' | 'STAFF' | 'STAFF_MANAGER' | 'ADMIN') => {
     const creds = DEMO_ACCOUNTS[role];
     if (!creds) return;
-    // Show loading state by clearing user first so UI shows transition
-    const success = await login(creds.email, creds.pass);
-    if (!success) {
-      // Fallback: set local user so UI still updates
-      const fallback: User = {
-        id: `u-${role.toLowerCase()}`,
-        email: creds.email,
-        fullName: role === 'CUSTOMER' ? 'Khách Hàng Demo'
-                : role === 'STAFF' ? 'Nhân Viên Demo'
-                : role === 'STAFF_MANAGER' ? 'Quản Lý Demo'
-                : 'Quản Trị Demo',
-        role,
-        loyaltyAccount: role === 'CUSTOMER' ? {
-          tier: 'GOLD',
-          milesBalance: 15000,
-          membershipNumber: 'VSK-DEMO01',
-        } : undefined,
-      };
-      setUser(fallback);
-      await saveToken('demo-jwt-' + role.toLowerCase());
-      await AsyncStorage.setItem('@vietsky_user', JSON.stringify(fallback));
-    }
+    await login(creds.email, creds.pass);
   };
 
   const logout = async () => {

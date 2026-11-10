@@ -142,6 +142,37 @@ export const FlightSearchScreen = ({ navigation }: any) => {
                   style={styles.textInput}
                 />
               </View>
+
+              {/* Quick Date Chips */}
+              <View style={styles.quickDateRow}>
+                {(() => {
+                  const today = new Date();
+                  return [
+                    { offset: 0, label: 'Hôm nay' },
+                    { offset: 1, label: 'Ngày mai' },
+                    { offset: 2, label: 'Ngày kia' },
+                    { offset: 3, label: '+3 ngày' },
+                    { offset: 7, label: '+7 ngày' },
+                  ].map((item) => {
+                    const dt = new Date(today);
+                    dt.setDate(today.getDate() + item.offset);
+                    const dtStr = dt.toISOString().split('T')[0];
+                    const isActive = departureDate === dtStr;
+                    return (
+                      <TouchableOpacity
+                        key={item.label}
+                        onPress={() => setDepartureDate(dtStr)}
+                        style={[styles.quickDateChip, isActive && styles.quickDateChipActive]}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={[styles.quickDateText, isActive && styles.quickDateTextActive]}>
+                          {item.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  });
+                })()}
+              </View>
             </View>
           </View>
 
@@ -372,6 +403,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: COLORS.slate800,
+  },
+  quickDateRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 8,
+  },
+  quickDateChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
+    backgroundColor: COLORS.slate100,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  quickDateChipActive: {
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderColor: COLORS.gold,
+  },
+  quickDateText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.slate600,
+  },
+  quickDateTextActive: {
+    color: COLORS.goldDark,
+    fontWeight: '800',
   },
   optionsRow: {
     flexDirection: 'row',

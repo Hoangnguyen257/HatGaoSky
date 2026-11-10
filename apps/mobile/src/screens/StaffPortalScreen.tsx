@@ -18,7 +18,9 @@ import { COLORS, SHADOWS } from '../constants/theme';
 
 export const StaffPortalScreen = ({ navigation }: any) => {
   const { user, isStaff, isManager, isAdmin, switchRole } = useAuth();
-  const [activeTab, setActiveTab] = useState<'requests' | 'flights' | 'stats'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'flights' | 'stats'>(
+    user?.role === 'STAFF' ? 'flights' : 'requests'
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -183,6 +185,24 @@ export const StaffPortalScreen = ({ navigation }: any) => {
 
   const formatPrice = (v: number) => (v || 0).toLocaleString('vi-VN') + ' đ';
 
+  const isStaffOnly = user?.role === 'STAFF';
+  const canApprove = user?.role === 'STAFF_MANAGER' || user?.role === 'ADMIN';
+
+  // Role details
+  const headerSubtitle = isStaffOnly
+    ? 'TRUNG TÂM TÁC NGHIỆP BAY'
+    : user?.role === 'ADMIN'
+    ? 'TRUNG TÂM QUẢN TRỊ HỆ THỐNG'
+    : 'TRUNG TÂM ĐIỀU HÀNH & TÀI CHÍNH';
+
+  const roleLabel = isStaffOnly
+    ? 'NHÂN VIÊN BAY'
+    : user?.role === 'ADMIN'
+    ? 'QUẢN TRỊ VIÊN'
+    : 'TRƯỞNG PHÒNG ĐIỀU HÀNH';
+
+  const roleColor = isStaffOnly ? COLORS.emerald : user?.role === 'ADMIN' ? COLORS.rose : COLORS.cyan;
+
   return (
     <View style={styles.container}>
       {/* Top Header */}
@@ -190,76 +210,62 @@ export const StaffPortalScreen = ({ navigation }: any) => {
         <View style={styles.headerRow}>
           <View>
             <View style={styles.badgeRow}>
-              <View style={styles.liveDot} />
-              <Text style={styles.headerSubtitle}>TRUNG TÂM ĐIỀU HÀNH BAY</Text>
+              <View style={[styles.liveDot, { backgroundColor: roleColor }]} />
+              <Text style={styles.headerSubtitle}>{headerSubtitle}</Text>
             </View>
-            <Text style={styles.headerTitle}>VietSky Operations</Text>
+            <Text style={styles.headerTitle}>
+              {isStaffOnly ? 'VietSky Flight Ops' : 'VietSky Operations'}
+            </Text>
           </View>
-          <View style={styles.roleTag}>
-            <Ionicons name="shield-checkmark" size={16} color={COLORS.secondary} />
-            <Text style={styles.roleTagText}>{user?.role || 'STAFF'}</Text>
-          </View>
-        </View>
-
-        {/* Demo Fast Role Switcher */}
-        <View style={styles.quickSwitchBox}>
-          <Text style={styles.quickSwitchLabel}>Chuyển quyền nhanh (Demo):</Text>
-          <View style={styles.quickSwitchRow}>
-            {(['STAFF', 'STAFF_MANAGER', 'ADMIN', 'CUSTOMER'] as const).map((r) => (
-              <TouchableOpacity
-                key={r}
-                style={[
-                  styles.quickSwitchBtn,
-                  user?.role === r && styles.quickSwitchBtnActive,
-                ]}
-                onPress={() => switchRole(r)}
-              >
-                <Text
-                  style={[
-                    styles.quickSwitchBtnText,
-                    user?.role === r && styles.quickSwitchBtnTextActive,
-                  ]}
-                >
-                  {r === 'STAFF_MANAGER' ? 'MANAGER' : r}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <View style={[styles.roleTag, { borderColor: roleColor }]}>
+            <Ionicons
+              name={isStaffOnly ? 'airplane' : user?.role === 'ADMIN' ? 'shield-checkmark' : 'bar-chart'}
+              size={14}
+              color={roleColor}
+            />
+            <Text style={[styles.roleTagText, { color: roleColor }]}>{roleLabel}</Text>
           </View>
         </View>
       </View>
 
-      {/* KPI Highlights Bar */}
-      <View style={styles.kpiContainer}>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiLabel}>DOANH THU THÁNG</Text>
-          <Text style={styles.kpiValue} numberOfLines={1}>
-            {dashboard ? formatPrice(dashboard.totalRevenue) : '---'}
+      {/* KPI Highlights Bar - Only for Managers and Admins */}
+      {canApprove ? (
+        <View style={styles.kpiContainer}>
+          <View style={styles.kpiCard}>
+            <Text style={styles.kpiLabel}>DOANH THU THÁNG</Text>
+            <Text style={styles.kpiValue} numberOfLines={1}>
+              {dashboard ? formatPrice(dashboard.totalRevenue) : '---'}
+            </Text>
+            <Text style={styles.kpiSub}>▲ 14.8% so tháng trước</Text>
+          </View>
+          <View style={styles.kpiCard}>
+            <Text style={styles.kpiLabel}>TỔNG ĐẶT CHỖ</Text>
+            <Text style={styles.kpiValue}>{dashboard?.totalBookings || '842'}</Text>
+            <Text style={styles.kpiSub}>98.2% đúng giờ</Text>
+          </View>
+        </View>
+      ) : (
+        /* Staff Shift & Airport Card */
+        <View style={styles.staffShiftCard}>
+          <View style={styles.staffShiftRow}>
+            <View style={styles.staffAirportBadge}>
+              <Ionicons name="location" size={14} color={COLORS.navy} />
+              <Text style={styles.staffAirportText}>Tân Sơn Nhất (SGN)</Text>
+            </View>
+            <View style={styles.staffStatusPill}>
+              <View style={styles.staffOnlineDot} />
+              <Text style={styles.staffStatusText}>Đang trong ca trực</Text>
+            </View>
+          </View>
+          <Text style={styles.staffTaskDesc}>
+            Nhiệm vụ: Giám sát cửa ra tàu bay, kiểm tra thông tin khách và số ghế trống.
           </Text>
-          <Text style={styles.kpiSub}>▲ 14.8% so tháng trước</Text>
         </View>
-        <View style={styles.kpiCard}>
-          <Text style={styles.kpiLabel}>TỔNG ĐẶT CHỖ</Text>
-          <Text style={styles.kpiValue}>{dashboard?.totalBookings || '842'}</Text>
-          <Text style={styles.kpiSub}>98.2% đúng giờ</Text>
-        </View>
-      </View>
+      )}
 
       {/* Tabs */}
       <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'requests' && styles.tabItemActive]}
-          onPress={() => setActiveTab('requests')}
-        >
-          <Ionicons
-            name="hourglass-outline"
-            size={18}
-            color={activeTab === 'requests' ? COLORS.primary : COLORS.gray}
-          />
-          <Text style={[styles.tabText, activeTab === 'requests' && styles.tabTextActive]}>
-            Yêu cầu ({requests.filter((r) => r.status === 'PENDING').length})
-          </Text>
-        </TouchableOpacity>
-
+        {/* For Staff: flights first. For Managers: requests first */}
         <TouchableOpacity
           style={[styles.tabItem, activeTab === 'flights' && styles.tabItemActive]}
           onPress={() => setActiveTab('flights')}
@@ -270,23 +276,39 @@ export const StaffPortalScreen = ({ navigation }: any) => {
             color={activeTab === 'flights' ? COLORS.primary : COLORS.gray}
           />
           <Text style={[styles.tabText, activeTab === 'flights' && styles.tabTextActive]}>
-            Chuyến bay ({flights.length})
+            Lịch bay ({flights.length})
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.tabItem, activeTab === 'stats' && styles.tabItemActive]}
-          onPress={() => setActiveTab('stats')}
+          style={[styles.tabItem, activeTab === 'requests' && styles.tabItemActive]}
+          onPress={() => setActiveTab('requests')}
         >
           <Ionicons
-            name="bar-chart-outline"
+            name="hourglass-outline"
             size={18}
-            color={activeTab === 'stats' ? COLORS.primary : COLORS.gray}
+            color={activeTab === 'requests' ? COLORS.primary : COLORS.gray}
           />
-          <Text style={[styles.tabText, activeTab === 'stats' && styles.tabTextActive]}>
-            Hiệu suất
+          <Text style={[styles.tabText, activeTab === 'requests' && styles.tabTextActive]}>
+            {canApprove ? 'Duyệt yêu cầu' : 'Yêu cầu hỗ trợ'} ({requests.filter((r) => r.status === 'PENDING').length})
           </Text>
         </TouchableOpacity>
+
+        {canApprove && (
+          <TouchableOpacity
+            style={[styles.tabItem, activeTab === 'stats' && styles.tabItemActive]}
+            onPress={() => setActiveTab('stats')}
+          >
+            <Ionicons
+              name="bar-chart-outline"
+              size={18}
+              color={activeTab === 'stats' ? COLORS.primary : COLORS.gray}
+            />
+            <Text style={[styles.tabText, activeTab === 'stats' && styles.tabTextActive]}>
+              Hiệu suất
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Main Content */}
@@ -348,7 +370,7 @@ export const StaffPortalScreen = ({ navigation }: any) => {
                       </Text>
                     </View>
 
-                    {item.status === 'PENDING' && (
+                    {item.status === 'PENDING' && canApprove && (
                       <View style={styles.reqActions}>
                         <TouchableOpacity
                           style={[styles.actionBtn, styles.rejectBtn]}
@@ -373,6 +395,15 @@ export const StaffPortalScreen = ({ navigation }: any) => {
                         </TouchableOpacity>
                       </View>
                     )}
+
+                    {item.status === 'PENDING' && !canApprove && (
+                      <View style={styles.staffPendingNotice}>
+                        <Ionicons name="time-outline" size={14} color="#b45309" />
+                        <Text style={styles.staffPendingText}>
+                          Đang chờ Trưởng phòng điều hành xem xét & duyệt
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 ))
               )}
@@ -382,52 +413,61 @@ export const StaffPortalScreen = ({ navigation }: any) => {
           {activeTab === 'flights' && (
             <View>
               <Text style={styles.sectionTitle}>Lịch trình chuyến bay trực tiếp</Text>
-              {flights.map((flt) => (
-                <View key={flt.id} style={styles.flightItem}>
-                  <View style={styles.flightHeader}>
-                    <View style={styles.fltCodeBox}>
-                      <Ionicons name="airplane" size={16} color={COLORS.primary} />
-                      <Text style={styles.flightCode}>{flt.flightNumber}</Text>
-                    </View>
-                    <View
-                      style={[
-                        styles.fltStatusBadge,
-                        flt.status === 'BOARDING' && { backgroundColor: '#fef3c7' },
-                      ]}
-                    >
-                      <Text
+              {flights.map((flt) => {
+                const originCode = flt.originAirport?.code || flt.originCode || 'SGN';
+                const originCity = flt.originAirport?.city || flt.originName || 'Hồ Chí Minh';
+                const destCode = flt.destinationAirport?.code || flt.destCode || 'HAN';
+                const destCity = flt.destinationAirport?.city || flt.destName || 'Hà Nội';
+                const aircraftModel = typeof flt.aircraft === 'object' ? (flt.aircraft?.model || 'Airbus A321neo') : (flt.aircraft || 'Airbus A321neo');
+                const seats = flt.seatsAvailable !== undefined ? flt.seatsAvailable : (flt.fares?.[0]?.availableSeats ?? 45);
+
+                return (
+                  <View key={flt.id} style={styles.flightItem}>
+                    <View style={styles.flightHeader}>
+                      <View style={styles.fltCodeBox}>
+                        <Ionicons name="airplane" size={16} color={COLORS.primary} />
+                        <Text style={styles.flightCode}>{flt.flightNumber}</Text>
+                      </View>
+                      <View
                         style={[
-                          styles.fltStatusText,
-                          flt.status === 'BOARDING' && { color: '#b45309' },
+                          styles.fltStatusBadge,
+                          flt.status === 'BOARDING' && { backgroundColor: '#fef3c7' },
                         ]}
                       >
-                        {flt.status}
+                        <Text
+                          style={[
+                            styles.fltStatusText,
+                            flt.status === 'BOARDING' && { color: '#b45309' },
+                          ]}
+                        >
+                          {flt.status}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.flightRouteRow}>
+                      <View>
+                        <Text style={styles.fltAirport}>{originCode}</Text>
+                        <Text style={styles.fltCity}>{originCity}</Text>
+                      </View>
+                      <Ionicons name="arrow-forward" size={18} color={COLORS.gray} />
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={styles.fltAirport}>{destCode}</Text>
+                        <Text style={styles.fltCity}>{destCity}</Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.flightFooter}>
+                      <Text style={styles.fltAircraft}>
+                        <Ionicons name="hardware-chip-outline" size={12} /> {aircraftModel}
+                      </Text>
+                      <Text style={styles.fltSeats}>
+                        Còn lại: <Text style={{ fontWeight: '700', color: COLORS.primary }}>{seats} ghế</Text>
                       </Text>
                     </View>
                   </View>
-
-                  <View style={styles.flightRouteRow}>
-                    <View>
-                      <Text style={styles.fltAirport}>{flt.originCode}</Text>
-                      <Text style={styles.fltCity}>{flt.originName}</Text>
-                    </View>
-                    <Ionicons name="arrow-forward" size={18} color={COLORS.gray} />
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={styles.fltAirport}>{flt.destCode}</Text>
-                      <Text style={styles.fltCity}>{flt.destName}</Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.flightFooter}>
-                    <Text style={styles.fltAircraft}>
-                      <Ionicons name="hardware-chip-outline" size={12} /> {flt.aircraft}
-                    </Text>
-                    <Text style={styles.fltSeats}>
-                      Còn lại: <Text style={{ fontWeight: '700', color: COLORS.primary }}>{flt.seatsAvailable} ghế</Text>
-                    </Text>
-                  </View>
-                </View>
-              ))}
+                );
+              })}
             </View>
           )}
 
@@ -933,6 +973,76 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
+  },
+  staffShiftCard: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 8,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  staffShiftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  staffAirportBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(15,43,92,0.08)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  staffAirportText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.navy,
+  },
+  staffStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#dcfce7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  staffOnlineDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.emerald,
+  },
+  staffStatusText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.emerald,
+  },
+  staffTaskDesc: {
+    fontSize: 12,
+    color: COLORS.slate500,
+    lineHeight: 18,
+  },
+  staffPendingNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fef3c7',
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+  },
+  staffPendingText: {
+    fontSize: 11,
+    color: '#92400e',
+    fontWeight: '600',
+    flex: 1,
   },
   modalConfirmText: {
     color: '#fff',

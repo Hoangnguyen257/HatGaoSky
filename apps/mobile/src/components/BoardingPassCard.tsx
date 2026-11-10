@@ -10,15 +10,17 @@ interface BoardingPassCardProps {
 
 export const BoardingPassCard: React.FC<BoardingPassCardProps> = ({ booking, passengerIndex = 0 }) => {
   const pnr = booking?.pnr || 'VSK89A';
-  const flight = booking?.outboundFlight || booking?.flight || {};
-  const passenger = booking?.passengers?.[passengerIndex] || {
-    firstName: 'AN',
-    lastName: 'NGUYEN VAN',
+  const ticket = booking?.tickets?.[passengerIndex];
+  const flight = booking?.outboundFlight || booking?.flight || ticket?.flight || {};
+  const passenger = booking?.passengers?.[passengerIndex] || ticket?.passenger || {
+    firstName: booking?.customerName?.split(' ').slice(-1)[0] || 'HÀNH KHÁCH',
+    lastName: booking?.customerName?.split(' ').slice(0, -1).join(' ') || '',
   };
-  const seat = booking?.tickets?.[passengerIndex]?.seat?.seatNumber ||
+  const seat = ticket?.seat?.seatNumber ||
                booking?.outboundSeats?.[passengerIndex] ||
+               ticket?.seatNumber ||
                '12A';
-  const cabinClass = booking?.cabinClass || 'ECONOMY';
+  const cabinClass = ticket?.cabinClass || booking?.cabinClass || 'ECONOMY';
 
   const depTime = flight.departureTime ? new Date(flight.departureTime) : new Date();
   const boardingTime = new Date(depTime.getTime() - 40 * 60 * 1000); // 40 mins prior

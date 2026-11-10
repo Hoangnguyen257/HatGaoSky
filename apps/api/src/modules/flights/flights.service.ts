@@ -73,10 +73,10 @@ export class FlightsService {
         orderBy: { departureTime: 'asc' },
       });
 
-      // In case exact date has no flights in demo, also find any flights on that route to offer flexible options
+      // In case exact date has no flights in demo, also find any flights on that route and project to requested date
       let results = flights;
       if (results.length === 0) {
-        results = await this.prisma.flight.findMany({
+        const fallbackFlights = await this.prisma.flight.findMany({
           where: {
             originAirport: { code: originCode.toUpperCase() },
             destinationAirport: { code: destCode.toUpperCase() },
@@ -89,8 +89,25 @@ export class FlightsService {
             aircraft: true,
             fares: true,
           },
-          take: 5,
+          take: 6,
           orderBy: { departureTime: 'asc' },
+        });
+
+        results = fallbackFlights.map((f) => {
+          const origDep = new Date(f.departureTime);
+          const origArr = new Date(f.arrivalTime);
+          const durMs = origArr.getTime() - origDep.getTime();
+
+          const [y, m, d] = dateStr.split('-').map(Number);
+          const newDep = new Date(origDep);
+          newDep.setFullYear(y, m - 1, d);
+          const newArr = new Date(newDep.getTime() + durMs);
+
+          return {
+            ...f,
+            departureTime: newDep,
+            arrivalTime: newArr,
+          };
         });
       }
 
